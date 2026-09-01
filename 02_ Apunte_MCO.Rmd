@@ -1,0 +1,464 @@
+---
+title: "Apunte 2: Regresión Lineal y Mínimos cuadrados Ordinarios"
+subtitle: "Econometría para la gestión · Ingeniería Comercial"
+author: "Prof. Juan Pablo Carrasco"
+date: "`r format(Sys.time(), '%d de %B de %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: tango
+    code_folding: show
+    df_print: paged
+    self_contained: true
+---
+
+
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center"
+)
+library(ggplot2)
+
+```
+
+<style>
+/* Estilos para las cajas de interacción y preguntas */
+.quiz-card {
+  background-color: #f8f9fa;
+  border-left: 5px solid #2780e3;
+  padding: 18px 22px;
+  margin: 25px 0;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.quiz-title {
+  font-weight: bold;
+  color: #2780e3;
+  margin-bottom: 12px;
+  font-size: 1.05em;
+}
+.quiz-options label {
+  display: block;
+  margin-bottom: 8px;
+  cursor: pointer;
+  font-weight: normal;
+}
+.quiz-feedback {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  display: none;
+  font-size: 0.95em;
+}
+.alert-box {
+  background-color: #eef7ff;
+  border: 1px solid #bce8f1;
+  padding: 12px 15px;
+  border-radius: 4px;
+  margin: 15px 0;
+}
+
+</style>
+
+<script>
+function checkAnswer(qName, correctVal, feedbackId, explanation) {
+  var options = document.getElementsByName(qName);
+  var selected = -1;
+  for (var i = 0; i < options.length; i++) {
+    if (options[i].checked) {
+      selected = options[i].value;
+      break;
+    }
+  }
+  
+  var fb = document.getElementById(feedbackId);
+  fb.style.display = 'block';
+  
+  if (selected === -1) {
+    fb.className = 'quiz-feedback alert alert-warning';
+    fb.innerHTML = '⚠️ Por favor, selecciona una opción antes de verificar.';
+  } else if (parseInt(selected) === correctVal) {
+    fb.className = 'quiz-feedback alert alert-success';
+    fb.innerHTML = '✅ <strong>¡Correcto!</strong> ' + explanation;
+  } else {
+    fb.className = 'quiz-feedback alert alert-danger';
+    fb.innerHTML = '❌ <strong>Incorrecto.</strong> Intenta de nuevo o revisa la justificación: ' + explanation;
+  }
+}
+</script>
+
+# **Fundamentos Teóricos: El Modelo de Regresión Lineal Simple**
+
+La teoría econométrica clásica define la regresión simple mediante los siguientes pilares exactos:
+
+> **Definición**: "El análisis de regresión trata del estudio de la dependencia de una variable (variable dependiente) respecto de una o más variables (variables explicativas) con el objetivo de estimar o predecir la media o valor promedio poblacional de la primera en términos de los valores conocidos o fijos (en muestras repetidas) de las segundas."  
+
+> **Función de Regresión Poblacional (FRP)**: Como primera aproximación o hipótesis de trabajo, se supone que la FRP es una función lineal expresada como $E(Y\vert{}X_i) = \beta_1 + \beta_2X_i$.  
+
+> **El modelo econométrico (Estocástico)**: Las relaciones entre variables económicas suelen ser inexactas. Por ello, se modifica la función determinista añadiendo un componente aleatorio, resultando en: $Y_i = \beta_1 + \beta_2X_i + u_i$.  
+
+> **El término de error *($u_i$)* **: La variable $u_i$, conocida como término de perturbación estocástica, es "un sustituto de todas las variables que se omiten en el modelo, pero que, en conjunto, afectan a Y."
+
+La teoría nos dice que la Función de Regresión Poblacional (FRP) **asume una aproximación lineal**, expresada como $E(Y\vert{}X_i) = \beta_1 + \beta_2 X_i$. Sin embargo, la realidad económica exige un modelo econométrico estocástico que incorpore un término de perturbación aleatoria ($u_i$), quedando como $Y_i = \beta_1 + \beta_2 X_i + u_i$ para reflejar que la relación entre variables es inexacta y está sujeta a variaciones individuales. 
+
+Ahora, si tenemos una muestra de cientos de observaciones, escribir cientos de ecuaciones estocásticas individuales resultaría imposible. Aquí es donde entra la **especificación matricial** como un "atajo" organizativo: agrupamos todas las variables dependientes en un bloque, todas las explicativas en otro gran bloque, y esto nos permite expresar todo el modelo de regresión lineal con k variables en una sola y elegante ecuación compacta como $Y = X\beta + u$
+
+## Vectores y Matrices en la Regresión Lineal
+
+Sé que muchos de ustedes no han cursado álgebra matricial, así que vamos a conocer algunos de estos conceptos de forma muy sencilla.
+
+>**¿Qué es una Matriz?**
+>Según el Apéndice B del libro, una matriz es simplemente un arreglo de números. Imaginen una tabla de Excel. Si ustedes descargan un dataset de Kaggle y lo abren, esa cuadrícula completa con filas (que son sus observaciones) y columnas (que son sus diferentes variables) es, a efectos prácticos, una matriz. 
+A esta gran tabla donde guardamos todas nuestras variables explicativas (X1, X2, X3...) la llamamos la Matriz X.  
+
+>**¿Qué es un Vector?**
+>Un vector columna es simplemente una matriz que está conformada por una sola columna de números. Si de nuestra tabla de Excel extraemos únicamente la columna del gasto de consumo (nuestra variable dependiente), eso es el Vector Y. De igual forma, nuestros coeficientes a estimar ($\beta_1, \beta_2$) se agrupan en otro Vector $\beta$, y los errores aleatorios forman el Vector $u$.  
+
+>**En el contexto de la regresión**
+>Cuando en RStudio escribimos el código para calcular una regresión, el programa no resuelve las ecuaciones una por una. Lo que hace es tomar nuestro Vector $Y$ (una columna) y lo compara con nuestra Matriz $X$ (toda la tabla de datos) de una sola vez para encontrar el Vector $\beta$ (la columna de resultados). Los vectores y matrices son simplemente "cajas" que nos permiten ordenar los datos para que el software analice miles de datos en milisegundos.
+
+# **Especificación Matricial y Estimación MCO**
+
+En el libro Econometría de Gujarati y Porter (2010) en el Capítulo 7 y el Apéndice C, el modelo poblacional con $k$ parámetros ($k-1$ variables explicativas y un intercepto) se formula para la $i$-ésima observación como:  
+$$Y_i = \beta_1 + \beta_2 X_{2i} + \beta_3 X_{3i} + \dots + \beta_k X_{ki} + u_i, \quad i = 1, 2, \dots, n$$  
+En notación matricial compacta:  
+$$\mathbf{Y} = \mathbf{X}\boldsymbol{\beta} + \mathbf{u}$$  
+Donde los vectores y matrices se definen dimensionalmente de la siguiente forma:
+
+$$\mathbf{Y} = \begin{bmatrix} Y_1 \\ Y_2 \\ \vdots \\ Y_n \end{bmatrix}_{n \times 1}, \quad \mathbf{X} = \begin{bmatrix} 1 & X_{21} & \cdots & X_{k1} \\ 1 & X_{22} & \cdots & X_{k2} \\ \vdots & \vdots & \ddots & \vdots \\ 1 & X_{2n} & \cdots & X_{kn} \end{bmatrix}_{n \times k}, \quad \boldsymbol{\beta} = \begin{bmatrix} \beta_1 \\ \beta_2 \\ \vdots \\ \beta_k \end{bmatrix}_{k \times 1}, \quad \mathbf{u} = \begin{bmatrix} u_1 \\ u_2 \\ \vdots \\ u_n \end{bmatrix}_{n \times 1}$$  
+El principio de Mínimos Cuadrados Ordinarios (MCO) minimiza la Suma de Cuadrados de los Residuos ($\mathbf{\hat{u}}'\mathbf{\hat{u}}$):  
+
+$$S(\hat{\boldsymbol{\beta}}) = \mathbf{\hat{u}}'\mathbf{\hat{u}} = (\mathbf{Y} - \mathbf{X}\hat{\boldsymbol{\beta}})'(\mathbf{Y} - \mathbf{X}\hat{\boldsymbol{\beta}}) = \mathbf{Y}'\mathbf{Y} - 2\hat{\boldsymbol{\beta}}'\mathbf{X}'\mathbf{Y} + \hat{\boldsymbol{\beta}}'\mathbf{X}'\mathbf{X}\hat{\boldsymbol{\beta}}$$
+Aplicando la derivada parcial respecto al vector $\hat{\boldsymbol{\beta}}$ e igualando al vector nulo se obtienen las ecuaciones normales:
+
+$$\frac{\partial S}{\partial \hat{\boldsymbol{\beta}}} = -2\mathbf{X}'\mathbf{Y} + 2\mathbf{X}'\mathbf{X}\hat{\boldsymbol{\beta}} = \mathbf{0} \implies \mathbf{X}'\mathbf{X}\hat{\boldsymbol{\beta}} = \mathbf{X}'\mathbf{Y}$$  
+Despejando el vector de estimadores de MCO:  
+$$\hat{\boldsymbol{\beta}} = (\mathbf{X}'\mathbf{X})^{-1}\mathbf{X}'\mathbf{Y}$$
+Para calcular los estimadores $\hat{\beta_0}$ y $\hat{\beta_1}$ mediante la ecuación matricial $\hat{\beta} = (X'X)^{-1}X'Y$, se debe construir la matriz de diseño $X$ (incorporando una columna de unos para el intercepto) y aplicar las funciones de álgebra lineal base de R.
+
+## Ecuación matricial en R.
+```{r}
+# 1. Definir los datos de ejemplo
+x <- c(1, 2, 3, 4, 5) # Variable independiente
+y <- c(2, 4, 5, 4, 5) # Variable dependiente
+
+# 2. Construir la matriz de diseño X y el vector Y
+# Se requiere un vector de unos de la misma longitud que x para el Beta_0
+n <- length(x)
+columna_unos <- rep(1, n)
+
+# Unimos la columna de unos y el vector x
+X <- cbind(columna_unos, x)
+
+# Convertimos y en una matriz de una sola columna
+Y <- matrix(y, ncol = 1)
+
+# 3. Aplicar la fórmula: beta = (X'X)^-1 X'Y
+
+X_transpuesta <- t(X)
+#t() "voltea" la matriz X: las columnas ahora son filas.
+# Es como acostar tu tabla de datos para poder cruzarla consigo misma.
+
+producto_XX <- X_transpuesta %*% X
+# %*% multiplica la matriz volteada por la original.
+# Esto comprime los datos de X y calcula la variación interna de tus variables.
+
+inversa_XX <- solve(producto_XX)
+#solve() calcula la "inversa". Como en las matrices no existe la división tradicional, la inversa es el truco para poder "dividir" estos bloques más adelante
+
+producto_XY <- X_transpuesta %*% Y
+#Multiplicamos la matriz volteada de X por la matriz Y.
+# Esto resume cómo se mueven juntos tus predictores (X) y tu resultado (Y).
+
+# Multiplicación final para obtener los coeficientes
+# Multiplicamos la parte "dividida" por el resumen de XY.
+# Esto despeja la ecuación y te entrega el resultado final: B0 y B1.
+beta_estimado <- inversa_XX %*% producto_XY
+
+# 4. Mostrar los resultados
+rownames(beta_estimado) <- c("Beta_0 (Intercepto)", "Beta_1 (Pendiente)")
+print(beta_estimado)
+
+```
+Funciones Matriciales Clave
+
+**cbind():** Combina vectores por columnas para crear la matriz $X$.
+
+**t():** Obtiene la transpuesta de una matriz, representando $X'$.
+
+**%*%:** Es el operador matemático estricto para multiplicar matrices en R (usar solo * multiplicaría elemento por elemento).
+
+**solve():** Calcula la matriz inversa, equivalente a elevar a la potencia de $-1$.
+
+
+
+```{r}
+# 1. plot() grafica los puntos originales (x, y) en un plano cartesiano.
+# pch=16 hace que los puntos sean círculos sólidos; col les da color.
+plot(x, y, main = "Nuestra Regresión Lineal", xlab = "Variable X", ylab = "Variable Y", pch = 16, col = "blue")
+
+# 2. abline() dibuja una línea recta sobre el gráfico actual.
+# Le pasamos el intercepto (B0) y la pendiente (B1) que calculamos antes.
+abline(a = beta_estimado[1], b = beta_estimado[2], col = "red", lwd = 2)
+```
+
+## Aplica en R
+```{r estimacion-beta, exercise=TRUE, exercise.lines=20}
+# 1. Ingresamos los datos de inversión en marketing (x) y ventas (y)
+x <- c(10, 20, 30, 40, 50)
+y <- c(15, 35, 45, 55, 75)
+
+# 2. Construimos la Matriz X y el Vector Y
+n <- length(x)
+X <- cbind(rep(1, n), x)
+Y <- matrix(y, ncol = 1)
+
+# 3. Componentes de la fórmula matricial: Beta = (X'X)^-1 X'Y
+X_transpuesta <- t(X)
+producto_XX <- X_transpuesta %*% X
+inversa_XX <- solve(producto_XX)
+producto_XY <- X_transpuesta %*% Y
+
+# --- ¡TU TURNO! ---
+# Escribe el código para multiplicar la 'inversa_XX' por el 'producto_XY'.
+# Recuerda usar el operador de multiplicación matricial de R.
+
+beta_estimado <- matrix(0, nrow = 2)
+
+
+
+# --- No modifiques las líneas inferiores (visualización de resultados) ---
+rownames(beta_estimado) <- c("Beta_0", "Beta_1")
+print(beta_estimado)
+```
+
+```{r estimacion-beta-hint}
+# Pista: En R, la multiplicación de matrices requiere el operador %*%
+# Tu línea debería verse así:
+beta_estimado <- inversa_XX %*% producto_XY
+```
+
+
+```{r}
+# 4. Gráfico
+plot(x, y, main = "Marketing vs Ventas", pch = 16, col = "blue")
+abline(a = beta_estimado[1], b = beta_estimado[2], col = "red", lwd = 2)
+
+```
+
+
+
+# **Propiedades de las Estimadores y Teorema de Gauss-Markov**
+
+Para entender cómo evaluamos si nuestro modelo de regresión es "bueno", recurrimos al Teorema de Gauss-Markov. 
+
+Este teorema es la piedra angular de la econometría clásica y justifica por qué utilizamos los Mínimos Cuadrados Ordinarios (MCO).El teorema establece que:
+
+> Dados los supuestos del modelo clásico de regresión lineal, los estimadores de mínimos cuadrados, dentro de la clase de estimadores lineales insesgados, tienen varianza mínima, es decir, son **MELI (Mejor Estimador Lineal Insesgado)**.
+
+**"Bajo los supuestos clásicos en notación matricial**, donde:
+
+* el error esperado es cero ($E(u \mid X)=0$) y 
+* la varianza es constante (Homoscedasticidad: $Var(u \mid X)=\sigma^2 I_n$). 
+
+**El estimador $\hat{\beta}$ cumple con 4 propiedades fundamentales (MELI)**.
+
+## **Linealidad**
+El estimador es una función lineal de la variable dependiente $Y$. Matemáticamente es simple de calcular y manipular, lo que permite que su procesamiento computacional sea muy eficiente.
+
+## **Insesgadez**
+Su valor esperado o promedio es igual al verdadero parámetro poblacional: 
+
+$$E(\hat{\beta})=\beta$$
+>Imagina que lanzas dardos a un tablero. Puede que no des siempre en el centro exacto, pero si el promedio de todos tus lanzamientos da exactamente en el blanco, tu técnica es "insesgada". No hay una desviación sistemática ni hacia arriba ni hacia abajo.
+
+## **Varianza Mínima**
+La matriz de Varianzas y Covarianzas está dada por:
+
+$$Var(\hat{\beta})=\sigma^2(X'X)^{-1}$$
+De todos los estimadores lineales e insesgados que existen, el de MCO es el que tiene la menor varianza.
+
+>Volviendo a los dardos, no solo tu promedio da en el centro, sino que tus dardos están lo más agrupados y concentrados posible. Eres un lanzador preciso (baja varianza).
+
+A continuación, se presenta un **"tablero de dardos"** para **entender visualmente qué significa que un estimador sea MELI** (Insesgado y de Varianza Mínima) frente a otras alternativas. **El punto rojo central representa el verdadero parámetro poblacional** **$\beta$**.
+
+```{r echo=FALSE}
+set.seed(123)
+n_dardos <- 50
+
+# Generamos datos simulados para los 4 escenarios
+df_dardos <- data.frame(
+  x = c(rnorm(n_dardos, 0, 0.3), rnorm(n_dardos, 0, 1.2), 
+        rnorm(n_dardos, 2, 0.3), rnorm(n_dardos, 2, 1.2)),
+  y = c(rnorm(n_dardos, 0, 0.3), rnorm(n_dardos, 0, 1.2), 
+        rnorm(n_dardos, 2, 0.3), rnorm(n_dardos, 2, 1.2)),
+  Escenario = factor(rep(c("1. MELI: Insesgado y Baja Varianza (Ideal)",
+                           "2. Insesgado pero Alta Varianza",
+                           "3. Sesgado pero Baja Varianza",
+                           "4. Sesgado y Alta Varianza (El peor)"), 
+                         each = n_dardos))
+)
+
+# Gráfico
+ggplot(df_dardos, aes(x, y)) +
+  geom_point(color = "steelblue", size = 2, alpha = 0.7) +
+  # El "Blanco" del tablero (verdadero parámetro poblacional)
+  geom_point(aes(x = 0, y = 0), color = "red", size = 4, shape = 13, stroke = 2) +
+  # CORRECCIÓN 1: Forzar el salto de línea en textos largos (ancho máximo de 25 caracteres)
+  facet_wrap(~Escenario, labeller = label_wrap_gen(width = 25)) +
+  coord_fixed(xlim = c(-3, 4), ylim = c(-3, 4)) +
+  theme_bw() +
+  labs(title = "Representación visual Sesgo vs Varianza",
+       subtitle = "La cruz roja representa el verdadero parámetro poblacional",
+       x = "", y = "") +
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        strip.background = element_rect(fill = "#f0f0f0"),
+        # CORRECCIÓN 2: Reducir el tamaño de la letra a 9 para asegurar que encaje
+        strip.text = element_text(face = "bold", size = 9))
+```
+<div style="text-align: justify;">
+## **Estimador insesgado de la varianza del error ($\hat{\sigma}^2$)**
+
+Dado que no conocemos la verdadera varianza de los errores poblacionales ($\sigma^2$), la estimamos con los residuos de nuestra muestra ($\hat{u}$):
+</div>
+
+$$ \hat{\sigma}^2 = \frac{\hat{u}'\hat{u}}{n-k} = \frac{\sum_{i=1}^{n}\hat{u}_i^2}{n-k} $$
+<div style="text-align: justify;">
+$n$ es el número de observaciones y $k$ el número de parámetros estimados (grados de libertad). **Esta fórmula mide qué tan alejados están nuestros datos reales de la línea de predicción de nuestro modelo**. Si esta varianza es pequeña, nuestro modelo hace buenas predicciones.
+</div>
+
+> **Entendiendo los Residuos ($\hat{u}$)**
+> En el siguiente gráfico, la línea negra es nuestro modelo estimado (MCO). **Los puntos azules son nuestros datos reales**, y las líneas punteadas rojas son los residuos ($\hat{u}_i$). **La varianza del error mide qué tan largas son en promedio estas líneas rojas.**
+
+```{r echo=FALSE}
+set.seed(456)
+x_res <- runif(30, 1, 10)
+y_res <- 2 + 1.5 * x_res + rnorm(30, 0, 2)
+modelo <- lm(y_res ~ x_res)
+y_hat <- predict(modelo)
+
+df_res <- data.frame(x = x_res, y = y_res, pred = y_hat)
+
+ggplot(df_res, aes(x = x, y = y)) +
+  # Residuos
+  geom_segment(aes(xend = x, yend = pred), color = "red", linetype = "dashed", alpha = 0.6) +
+  # Datos reales
+  geom_point(size = 3, color = "#2c3e50") +
+  # Recta de regresión
+  geom_smooth(method = "lm", se = FALSE, color = "black", size = 1) +
+  theme_minimal() +
+  labs(title = "Representación Gráfica de los Residuos (Errores Estimados)",
+       subtitle = "Las líneas rojas punteadas (residuos) se usan para calcular la varianza del error",
+       x = "Variable Independiente (X)",
+       y = "Variable Dependiente (Y)") +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+# **Bondad de Ajuste**
+
+<div style="text-align: justify;">
+Una vez estimado el modelo a través de MCO, necesitamos evaluar qué tan bien nuestra línea de regresión se ajusta a los datos reales. Para ello, descomponemos la variación muestral total de la variable dependiente ($SCT$) en la porción explicada por nuestro modelo ($SCE$) y la porción que queda sin explicar en los residuos
+($SCR$), tal que $SCT = SCE + SCR$.
+</div>
+
+$$R^2 = \frac{SCE}{SCT} = 1 - \frac{SCR}{SCT}, \quad \bar{R}^2 = 1 - (1 - R^2)\frac{n - 1}{n - k}$$
+
+<div style="text-align: justify;">
+Para verificar empíricamente si el modelo en su conjunto tiene validez estadística, la <strong>Prueba de Significancia Global</strong> evalúa la hipótesis nula de que todas las pendientes son nulas de manera simultánea ($H_0: \beta_2 = \beta_3 = \dots = \beta_k = 0$). Si esto fuera cierto, significaría que ninguna variable $X$ ayuda a explicar a $Y$.
+</div>
+
+$$F = \frac{SCE / (k - 1)}{SCR / (n - k)} = \frac{R^2 / (k - 1)}{(1 - R^2) / (n - k)} \sim F_{(k-1, \, n-k)}$$
+<div style="text-align: justify;">
+## **Aplicación Práctica en R: El mercado inmobiliario (Dataset Boston)**
+
+Aterricemos estos conceptos teóricos en la práctica econométrica. Utilizaremos el famoso conjunto de datos `Boston` para estimar el impacto del número promedio de habitaciones (`rm`) sobre el precio mediano de las viviendas en miles de dólares (`medv`). 
+</div>
+
+```{r regresion-boston, warning=FALSE, message=FALSE, fig.width=7, fig.height=5}
+# 1. Cargar librerías y datos
+library(MASS)    # Contiene el dataset Boston
+library(ggplot2)
+
+data("Boston")
+
+# 2. Estimar la Regresión Lineal Simple (MCO)
+modelo_boston <- lm(medv ~ rm, data = Boston)
+
+# 3. Mostrar el resumen estadístico
+summary(modelo_boston)
+
+```
+<div style="text-align: justify;">
+## **Interpretación Económica y Estadística de la Regresión Lineal**
+
+> Los Coeficientes Estimados ($\hat{\beta}$):
+
+* **Intercepto ($\hat{\beta}_0 = -34.67$)**: Matemáticamente, es el valor esperado del precio cuando las habitaciones son cero ($X=0$). 
+  En economía, muchas veces el intercepto carece de sentido práctico (una casa de 0 habitaciones no vale -$34,670 dólares). 
+  Su función real es actuar como un "ancla" matemática para posicionar la recta de regresión.
+
+* **Pendiente ($\hat{\beta}_1 = 9.102$)**: Este es el corazón de nuestra inferencia. Por cada habitación adicional que tiene una vivienda, **su precio mediano aumenta, en promedio, en $9,102 dólares (ceteris paribus)**. 
+
+```{r}
+# 4. Visualización del ajuste
+ggplot(Boston, aes(x = rm, y = medv)) +
+  geom_point(color = "#2c3e50", alpha = 0.4, size = 2) +
+  geom_smooth(method = "lm", color = "#c0392b", se = TRUE, fill = "#e74c3c", alpha = 0.2) +
+  theme_minimal() +
+  labs(title = "Regresión Lineal Simple: Precio vs Habitaciones",
+       subtitle = "La línea roja representa la predicción MCO; la banda sombreada el intervalo de confianza",
+       x = "Número promedio de habitaciones (rm)",
+       y = "Precio mediano en miles de USD (medv)") +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+
+* **Evaluación del Ajuste (El $R^2$)**:
+
+  **$R^2$ Múltiple ($0.482$)**: El número de habitaciones es capaz de explicar el 48.2% de la varianza total en los precios de las viviendas.
+  
+  **$R^2$ Ajustado ($0.481$)**: Esta métrica introduce una penalización por cada variable adicional que agregamos al modelo (corrigiendo por grados de libertad).
+
+> El $R^2$ normal siempre sube si metes más variables "basura" al modelo. El $R^2$ ajustado es el juez estricto que solo sube si la nueva variable realmente aporta valor. Al ser una regresión simple (solo una $X$), ambos valores son casi idénticos.
+
+* **Error Estándar Residual ($\hat{\sigma} = 6.616$)**:Representa la desviación estándar de los residuos. **En términos prácticos, nuestras predicciones de precios se equivocan, en promedio, por $6,616 dólares respecto a los precios reales observados en la muestra**. Es una medida directa de la precisión predictiva del modelo.
+
+* **Prueba de Significancia Global (Estadístico $F = 471.8$)**:El valor $F$ evalúa el modelo como un todo. Con un p-value (< 2.2e-16), rechazamos fuertemente $H_0$.
+Conclusión: Nuestro modelo es globalmente significativo. La relación que encontramos no es producto del azar; la cantidad de habitaciones efectivamente nos proporciona información estadísticamente válida para modelar el precio.
+</div>
+
+# **Comentarios finales**
+<div style="text-align: justify;">
+Comprender la teoría econométrica detrás de la práctica es lo que diferencia a un operador de software de un analista capaz de respaldar la toma de decisiones informadas. A continuación, recapitulamos la progresión metodológica de este apunte en cinco ejes centrales:
+
+<br>
+
+**1. El Modelo de Regresión Lineal**  
+Es la herramienta fundamental para cuantificar relaciones entre variables. A través de su estructura, logramos separar el comportamiento sistemático (la línea de predicción) del componente estocástico (el error $u$). Esto nos permite modelar fenómenos complejos aislando el impacto individual de cada factor (asumiendo *ceteris paribus*).
+
+**2. La Especificación Matricial**  
+A medida que pasamos de una regresión simple a modelos con múltiples variables independientes, el álgebra tradicional se vuelve inmanejable. La notación matricial ($Y = X\beta + u$) proporciona una estructura compacta y escalable. Es el lenguaje universal con el que el software procesa la estimación de parámetros mediante la resolución de $\hat{\beta} = (X'X)^{-1}X'Y$.
+
+**3. Las Propiedades MELI (Teorema de Gauss-Markov)**  
+No basta con calcular una línea; debemos asegurar que estadísticamente sea la mejor opción. El teorema nos garantiza que el estimador MCO es **Insesgado** (no comete errores sistemáticos) y tiene **Varianza Mínima** (es el más preciso). Volviendo a nuestra analogía inicial, nos asegura matemáticamente que estamos aplicando la mejor técnica posible para dar siempre en el centro del tablero de dardos.
+
+**4. Estimación Computacional en R (`lm`)**  
+La abstracción teórica converge con la eficiencia práctica. La función `lm()` (*Linear Model*) automatiza el pesado cálculo del álgebra de matrices. R procesa los datos subyacentes, invierte las matrices y minimiza la suma de los residuos al cuadrado de forma invisible para el usuario, entregando estimaciones robustas en fracciones de segundo.
+
+**5. Análisis e Interpretación de Resultados**  
+El procesamiento de datos carece de valor empírico sin una correcta interpretación. Evaluar el modelo requiere leer críticamente las salidas estadísticas (como el `summary()`): traducir la magnitud de los coeficientes ($\hat{\beta}$) a impactos reales, verificar su significancia estadística mediante los *p-values*, confirmar el poder explicativo con el $R^2$ ajustado, y validar la utilidad del modelo en su conjunto con la prueba de significancia global $F$.
+</div>
+
+# **Referencias Bibliográficas**
+
+* **Gujarati, D. N., & Porter, D. C. (2009).** *Econometría Básica* (5.ª ed.). McGraw-Hill Interamericana.
+* **Wooldridge, J. M. (2015).** *Introducción a la econometría: Un enfoque moderno* (5.ª ed.). Cengage Learning.
+* **Stock, J. H., & Watson, M. W. (2012).** *Introducción a la Econometría* (3.ª ed.). Pearson Educación.

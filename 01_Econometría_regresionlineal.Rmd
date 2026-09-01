@@ -1,0 +1,271 @@
+---
+title: "Apunte 1: La econometría y la regresión lineal"
+subtitle: "Econometría para la gestión · Ingeniería Comercial"
+author: "Prof. Juan Pablo Carrasco"
+date: "`r format(Sys.time(), '%d de %B de %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: tango
+    code_folding: show
+    df_print: paged
+    self_contained: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center"
+)
+```
+
+<style>
+/* Estilos para las cajas de interacción y preguntas */
+.quiz-card {
+  background-color: #f8f9fa;
+  border-left: 5px solid #2780e3;
+  padding: 18px 22px;
+  margin: 25px 0;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.quiz-title {
+  font-weight: bold;
+  color: #2780e3;
+  margin-bottom: 12px;
+  font-size: 1.05em;
+}
+.quiz-options label {
+  display: block;
+  margin-bottom: 8px;
+  cursor: pointer;
+  font-weight: normal;
+}
+.quiz-feedback {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  display: none;
+  font-size: 0.95em;
+}
+.alert-box {
+  background-color: #eef7ff;
+  border: 1px solid #bce8f1;
+  padding: 12px 15px;
+  border-radius: 4px;
+  margin: 15px 0;
+}
+</style>
+
+<script>
+function checkAnswer(qName, correctVal, feedbackId, explanation) {
+  var options = document.getElementsByName(qName);
+  var selected = -1;
+  for (var i = 0; i < options.length; i++) {
+    if (options[i].checked) {
+      selected = options[i].value;
+      break;
+    }
+  }
+  
+  var fb = document.getElementById(feedbackId);
+  fb.style.display = 'block';
+  
+  if (selected === -1) {
+    fb.className = 'quiz-feedback alert alert-warning';
+    fb.innerHTML = '⚠️ Por favor, selecciona una opción antes de verificar.';
+  } else if (parseInt(selected) === correctVal) {
+    fb.className = 'quiz-feedback alert alert-success';
+    fb.innerHTML = '✅ <strong>¡Correcto!</strong> ' + explanation;
+  } else {
+    fb.className = 'quiz-feedback alert alert-danger';
+    fb.innerHTML = '❌ <strong>Incorrecto.</strong> Intenta de nuevo o revisa la justificación: ' + explanation;
+  }
+}
+</script>
+
+# Introducción a la Econometría
+
+Bienvenidos al primer apunte de la asignatura. En el ámbito de la gestión y los negocios, la capacidad de **medir, modelar y pronosticar** el comportamiento de variables clave (ventas, costos, demanda, inflación, riesgo) es fundamental para la toma de decisiones estratégicas.
+
+La **econometría** es la disciplina cuantitativa que combina:
+
+1. **Teoría económica:** Plantea las relaciones causales e hipótesis cualitativas.
+2. **Matemáticas:** Formula dichas relaciones en ecuaciones determinísticas.
+3. **Inferencia estadística:** Permite contrastar los modelos con datos reales del mercado frente a la incertidumbre.
+
+```{r, echo=FALSE, out.width="60%"}
+# Diagrama conceptual de la econometría
+```
+
+## ¿Por qué estudiar Econometría en Ingeniería Comercial?
+
+La econometría proporciona herramientas analíticas rigurosas para:
+
+* **Evaluar relaciones causa-efecto:** Cuantificar el impacto marginal de una variable sobre otra (por ejemplo: *¿en cuánto aumentan los ingresos por cada peso adicional invertido en marketing digital?*).
+* **Predecir escenarios:** Pronosticar la demanda futura bajo distintas condiciones macroeconómicas y de competencia.
+* **Toma de decisiones basada en evidencia (*Data-Driven*):** Superar la simple intuición empresarial mediante análisis empírico validado.
+* **Control y formulación de políticas internas:** Diseñar estructuras de precios y esquemas de incentivos óptimos.
+
+---
+
+# ¿Qué es la Econometría?
+
+De acuerdo con **Gujarati y Porter (2009)**, la econometría se define como:
+
+> *"La aplicación de herramientas matemáticas y estadísticas a datos económicos con el fin de probar hipótesis, estimar relaciones y realizar pronósticos"* (p. 1).
+
+Es fundamental no confundir la econometría con disciplinas afines:
+
+## Econometría vs. Estadística Económica
+* **Estadística económica:** Se ocupa principalmente de la recolección, tabulación, procesamiento y presentación gráfica de cifras económicas (PIB, empleo, IPC). No busca verificar hipótesis causales de modelos teóricos.
+* **Econometría:** Utiliza esos datos observados para estimar parámetros estructurales y contrastar si la teoría económica se cumple en la práctica.
+
+## Econometría vs. Economía Matemática
+* **Economía matemática:** Expresa la teoría económica en forma de ecuaciones exactas (determinísticas), sin contrastarlas directamente con datos del mundo real.
+* **Economía econométrica:** Reconoce que el comportamiento humano y los mercados no son determinísticos; por ello, incorpora la **aleatoriedad y el error** para estimar relaciones con datos reales.
+
+---
+
+<!-- PREGUNTA INTERACTIVA 1 -->
+<!-- PREGUNTA INTERACTIVA 1 -->
+<div class="quiz-card">
+<div class="quiz-title">📝 Autoevaluación 1: Conceptos Fundamentales</div>
+<p><strong>Pregunta:</strong> ¿Cuál es la principal diferencia entre la econometría y la estadística económica?</p>
+
+<div class="quiz-options">
+<label><input type="radio" name="q1" value="0"> La econometría solo formula teorías sin usar datos, mientras que la estadística económica realiza pronósticos matemáticos.</label>
+<label><input type="radio" name="q1" value="1"> La estadística económica se enfoca en recopilar y describir datos; la econometría utiliza esos datos para probar hipótesis, medir impactos y pronosticar.</label>
+<label><input type="radio" name="q1" value="2"> La estadística económica asume causalidad estocástica y la econometría solo describe frecuencias observadas.</label>
+</div>
+
+<button class="btn btn-primary btn-sm" onclick="checkAnswer('q1', 1, 'fb1', 'La estadística económica es descriptiva (recolecta y presenta datos), mientras que la econometría somete los datos a pruebas estadísticas para validar teorías y estimar efectos causales.')">Verificar respuesta</button>
+
+<div id="fb1" class="quiz-feedback"></div>
+</div>
+---
+
+# Metodología de la Investigación Econométrica
+
+El proceso sistemático del análisis econométrico se compone de las siguientes etapas:
+
+## Planteamiento de la teoría o hipótesis
+Se parte de un principio teórico. *Ejemplo:* La **Ley de la Demanda** postula que, *ceteris paribus*, existe una relación inversa entre el precio de un bien y la cantidad demandada.
+
+## Especificación del modelo matemático (Determinístico)
+Se traduce la teoría a una formulación matemática exacta:
+
+$$Q_d = \beta_0 + \beta_1 P$$
+
+Donde:
+
+* $Q_d$: Cantidad demandada.
+* $P$: Precio del bien.
+* $\beta_0$: Intercepto (demanda autónoma).
+* $\beta_1$: Pendiente del modelo. Teóricamente se espera que $\beta_1 < 0$.
+
+## Especificación del modelo econométrico (Estocástico)
+En la realidad, el precio no determina la demanda de manera exacta, y existen otros factores no observados. Por ende, se añade un **término de perturbación estocástica ($u_i$)**:
+
+$$Q_{d,i} = \beta_0 + \beta_1 P_i + u_i$$
+
+Donde $u_i$ captura la influencia de variables omitidas (gustos, ingresos, clima), errores de medición y la aleatoriedad intrínseca del comportamiento humano.
+
+## Obtención de datos
+Recolección de información cuantitativa mediante:
+
+* **Corte transversal (*Cross-section*):** Múltiples individuos/empresas en un único momento del tiempo.
+* **Series de tiempo (*Time series*):** Una misma variable observada a lo largo de periodos regulares (mensual, trimestral, anual).
+* **Datos de panel (*Panel data*):** Combinación de corte transversal y series de tiempo.
+
+## Estimación de los parámetros
+Aplicación del método de **Mínimos Cuadrados Ordinarios (MCO / OLS)** u otros estimadores para hallar los coeficientes numéricos $\hat{\beta}_0$ y $\hat{\beta}_1$.
+
+## Pruebas de hipótesis e inferencia
+Verificación de significancia estadística ($t$-Student, $p$-values) e intervalos de confianza para comprobar si la evidencia empírica respalda el signo y magnitud esperados por la teoría.
+
+## Pronóstico y predicción
+Utilización del modelo ajustado ($\hat{Q}_d = \hat{\beta}_0 + \hat{\beta}_1 P$) para prever el nivel de demanda ante fijaciones de precios futuras.
+
+## Uso del modelo para la toma de decisiones
+Implementación de conclusiones en la estrategia de negocios: fijación de precios (*pricing*), planificación de inventarios o dimensionamiento de capacidad productiva.
+
+---
+
+<!-- PREGUNTA INTERACTIVA 2 -->
+<div class="quiz-card">
+<div class="quiz-title">📝 Autoevaluación 2: El Modelo Econométrico</div>
+<p><strong>Pregunta:</strong> ¿Por qué es indispensable incluir el término de error estocástico ($u$) al pasar de un modelo matemático a un modelo econométrico?</p>
+
+<div class="quiz-options">
+<label><input type="radio" name="q2" value="0"> Porque asegura que el coeficiente $\beta_1$ sea siempre positivo.</label>
+<label><input type="radio" name="q2" value="1"> Porque permite convertir una muestra pequeña en una población infinita.</label>
+<label><input type="radio" name="q2" value="2"> Porque captura factores no observables o excluidos, errores de medición y la variabilidad aleatoria inherente a la conducta humana.</label>
+</div>
+
+<button class="btn btn-primary btn-sm" onclick="checkAnswer('q2', 2, 'fb2', 'El término de error ($u$) reconoce que la realidad no es determinista, capturando todo aquello que influye en la variable dependiente pero que no está explícitamente en el modelo.')">Verificar respuesta</button>
+
+<div id="fb2" class="quiz-feedback"></div>
+</div>
+---
+
+# Aplicaciones de la Econometría en la Gestión Empresarial
+
+| Área de Aplicación | Problema de Decisión | Modelo Econométrico Típico |
+| :--- | :--- | :--- |
+| **Pricing y Demanda** | Determinar la elasticidad precio para maximizar ingresos. | Regresión log-log ($\ln Q = \beta_0 + \beta_1 \ln P + u$) |
+| **Marketing** | Medir el Retorno sobre la Inversión (ROI) de campañas publicitarias. | Regresión múltiple con variables de gasto en medios |
+| **Finanzas** | Estimar el riesgo sistemático ($\beta$) de una acción (Modelo CAPM). | Regresión lineal simple entre retornos |
+| **Recursos Humanos** | Evaluar la brecha salarial por nivel educativo o experiencia. | Ecuación de Mincer con variables *dummy* |
+
+---
+
+# Ejemplo Práctico en R: Estimación de Ventas y Publicidad
+
+A continuación, estimaremos un modelo de regresión lineal simple para evaluar cómo el gasto publicitario ($X$) impacta en las ventas ($Y$) de una empresa.
+
+$$Ventas_i = \beta_0 + \beta_1 Publicidad_i + u_i$$
+
+```{r ejemplo-regresion}
+# 1. Creación de datos muestrales (en miles de USD)
+datos_empresa <- data.frame(
+  publicidad = c(10, 15, 12, 18, 20, 17, 22, 25),
+  ventas     = c(100, 120, 110, 130, 150, 140, 165, 180)
+)
+
+# 2. Ajuste del modelo de Mínimos Cuadrados Ordinarios (MCO)
+modelo_ventas <- lm(ventas ~ publicidad, data = datos_empresa)
+
+# 3. Resumen de resultados estadísticos
+summary(modelo_ventas)
+```
+
+## Visualización del Modelo
+
+```{r grafico-dispersion, fig.cap="Ajuste de la recta de regresión MCO"}
+# Gráfico de dispersión y recta estimada
+plot(datos_empresa$publicidad, datos_empresa$ventas,
+     pch = 19, col = "#2780e3", cex = 1.4,
+     main = "Relación entre Publicidad y Ventas",
+     xlab = "Gasto en Publicidad (Miles USD)",
+     ylab = "Ventas (Miles USD)")
+
+# Agregar la recta de regresión
+abline(modelo_ventas, col = "#e74c3c", lwd = 2)
+grid()
+```
+
+### Interpretación económica:
+* **Pendiente ($\hat{\beta}_1 \approx 5.17$):** Por cada $1.000\text{ USD}$ adicionales invertidos en publicidad, las ventas aumentan en promedio en aproximadamente $5.170\text{ USD}$, manteniendo los demás factores constantes.
+
+---
+
+# Referencias Bibliográficas
+
+* **Gujarati, D. N., & Porter, D. C. (2009).** *Econometría Básica* (5.ª ed.). McGraw-Hill Interamericana.
+* **Wooldridge, J. M. (2015).** *Introducción a la econometría: Un enfoque moderno* (5.ª ed.). Cengage Learning.
+* **Stock, J. H., & Watson, M. W. (2012).** *Introducción a la Econometría* (3.ª ed.). Pearson Educación.
