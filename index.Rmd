@@ -1,0 +1,28 @@
+---
+title: "Econometría para la Gestión"
+subtitle: "Material de estudio y apuntes de clase"
+author: "Juan Pablo Carrasco Lillo"
+output: 
+  html_document:
+    theme: flatly
+    toc: false
+---
+
+## 📌 Apuntes disponibles
+
+Selecciona el formato que deseas consultar para cada unidad:
+
+### 1. Econometría y Regresión Lineal
+- 🌐 **[Ver Apunte en HTML](01.-Econometría-y-regresión-lineal.html)** *(Lectura interactiva en navegador)*
+- 📥 **[Descargar script.Rmd](https://github.com/jpcl-cl/Econometria/blob/main/01_Econometr%C3%ADa_regresionlineal.Rmd)** *(Código fuente reproducible)*
+
+---
+
+### 2. Mínimos Cuadrados Ordinarios (MCO)
+- 🌐 **[Ver Apunte en HTML](02_-Apunte_MCO.html)** *(Lectura interactiva en navegador)*
+- 📥 **[Descargar script .Rmd](https://github.com/jpcl-cl/Econometria/blob/main/02_Apunte_MCO.Rmd)** *(Código fuente reproducible)*
+
+---
+
+### 📂 Recursos adicionales
+- 🔗 **[Repositorio completo en GitHub](https://github.com/jpcl-cl/Econometria)**
