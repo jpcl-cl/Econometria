@@ -24,5 +24,12 @@ Selecciona el formato que deseas consultar para cada unidad:
 
 ---
 
+### 3. Conociendo el Lenguaje R
+
+* 🌐 [Ver Apunte en HTML](03_Conociendo_R.html) *(Lectura interactiva en navegador)*
+* 📥 [Descargar script .Rmd](03_Conociendo_R.Rmd) *(Código fuente reproducible)*
+
+---
+
 ### 📂 Recursos adicionales
 - 🔗 **[Repositorio completo en GitHub](https://github.com/jpcl-cl/Econometria)**
