@@ -1,0 +1,368 @@
+---
+title: "Apunte 3: Conociendo el lenguaje R"
+subtitle: "Econometría para la Gestión - Ingeniería Comercial"
+author: "Prof. Juan Pablo Carrasco"
+date: "`r format(Sys.time(), '%d de %B de %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: tango
+    code_folding: show
+    df_print: paged
+    self_contained: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center"
+)
+library(ggplot2)
+library(dplyr)
+```
+
+# **Introducción**
+
+En el quehacer empresarial contemporáneo de la Región de Los Lagos, desde las decisiones de biomasa y logística en la industria del salmón, hasta la fijación de precios en el sector lechero de Osorno o la ocupación hotelera en la cuenca del Lago Llanquihue, la toma de decisiones basada en datos ya no es una opción, sino una ventaja competitiva crítica.
+
+Hasta ahora, su herramienta habitual ha sido Microsoft Excel y, con suerte, herramientas de reportería como Power BI. Excel es excelente para tareas puntuales, pero presenta tres limitaciones estructurales para la econometría moderna:
+
+* **Falta de reproducibilidad**: Un error involuntario al arrastrar una fórmula en la celda C45 puede pasar desapercibido y arruinar una valorización o estimación.
+
+* **Escalabilidad limitada**: Trabajar con millones de registros de cosecha o telemetría satelital colapsa una hoja de cálculo tradicional.
+
+* **Rigidez analítica**: Estimar modelos multivariados, contrastar hipótesis robustas y evaluar supuestos econométricos en Excel requiere complementos inestables y pasos manuales tediosos.
+
+***R*** resuelve esto mediante código auditable, reproducible y robusto. Si ya saben estructurar una tabla dinámica o escribir fórmulas condicionales en Excel, aprender R solo requiere mapear esa intuición lógica a comandos claros.
+
+# 1 **Fundamentos de R: Objetos y Operaciones**
+## 1.1 ¿Qué es un objeto en R?
+En Excel, guardamos un valor en una celda con coordenadas (como =5000 en la celda B2). En R no existen "celdas fijas", sino objetos. **Un objeto** es una ***"caja con nombre"*** donde almacenamos cualquier cosa: un número, un texto, una fórmula, una tabla de datos completa o los resultados de una regresión lineal.
+
+El operador de asignación en R es **<-** (una flecha formada por el signo menor y un guion, equivalente al atajo de teclado Alt + - en Windows o Option + - en Mac).
+
+```{r}
+# Asignación de variables económicas y productivas
+precio_salmon_usd <- 7.25      # Precio FOB por kilo (USD)
+costo_planta_usd  <- 4.80      # Costo operativo por kilo procesado (USD)
+toneladas_cosecha <- 1200      # Volumen cosechado en Seno de Reloncaví
+
+# Margen unitario
+margen_unitario <- precio_salmon_usd - costo_planta_usd
+margen_unitario
+
+# Margen operativo total en dólares
+margen_total <- margen_unitario * (toneladas_cosecha * 1000)
+margen_total
+
+```
+## 1.2 Tipos de datos fundamentales
+Al igual que en Power BI (donde definimos el tipo de columna como Número entero, Texto o Verdadero/Falso), en R los datos tienen tipos esenciales:
+
+* **Numérico (numeric / double)**: Cifras continuas (ej. salarios, precios, tipo de cambio).
+* **Entero (integer)**: Conteos discretos (ej. número de jaulas, cantidad de operarios).
+* **Texto (character)**: Cadenas alfanuméricas entre comillas (ej. "Salmones Camanchaca", "Puerto Varas").
+* **Lógico (logical)**: Valores booleanos TRUE o FALSE (resultado de comparaciones).
+* **Factor (factor)**: Variables categóricas con niveles definidos (vitales para variables dummy en econometría).
+
+```{r}
+empresa <- "AquaChile"          # Character
+tipo_cambio <- 945.50           # Numeric
+jaulas_activas <- 18L           # Integer (la L fuerza formato entero)
+certificacion_bap <- TRUE       # Logical (Best Aquaculture Practices)
+
+# Verificamos la clase del objeto
+class(empresa)
+class(tipo_cambio)
+class(certificacion_bap)
+```
+## 1.3 Vectores: Las "Columnas" de Excel
+Un vector es una secuencia ordenada de datos del mismo tipo. Es la estructura básica en R y equivale exactamente a una columna unidimensional en una hoja de cálculo. **Se crea con la función c() (que significa combinar o concatenar)**.
+
+```{r}
+# Producción mensual lechera en Osorno (en miles de litros)
+produccion_leche <- c(320, 345, 310, 290, 410, 430)
+
+# Centros de cultivo en Los Lagos
+centros <- c("Calbuco", "Quellón", "Hornopirén", "Chonchi")
+
+# Operaciones vectorizadas automáticas (¡sin necesidad de arrastrar fórmulas!)
+# Si el precio por litro pagado al productor aumenta un 5% por bonificación de grasa:
+precio_base <- c(380, 385, 375, 390, 400, 410) # CLP por litro
+precio_con_bono <- precio_base * 1.05
+precio_con_bono
+```
+
+## 1.4 Operaciones Matemáticas y Estadísticas Básicas
+En la gestión econométrica requerimos sintetizar métricas de tendencia central y dispersión.A continuación comparamos las funciones nativas de R con sus fórmulas equivalentes en Excel:
+
+| Métrica Estadística | Función en R | Función en Excel |
+| :--- | :--- | :--- |
+| Suma | `sum(x)` | `=SUMA(rango)` |
+| Media / Promedio | `mean(x)` | `=PROMEDIO(rango)` |
+| Mediana | `median(x)` | `=MEDIANA(rango)` |
+| Varianza muestral ($s^2$) | `var(x)` | `=VAR.S(rango)` |
+| Desviación estándar ($s$) | `sd(x)` | `=DESVEST.M(rango)` |
+| Valor Mínimo / Máximo | `min(x)` / `max(x)` | `=MIN(rango)` / `=MAX(rango)` |
+| Resumen de cinco números | `summary(x)` | N/A (requiere análisis de datos) |
+
+```{r}
+# Estadísticas descriptivas de la producción lechera
+media_prod <- mean(produccion_leche)
+desv_prod  <- sd(produccion_leche)
+coef_var   <- (desv_prod / media_prod) * 100 # Coeficiente de variación (%)
+
+cat("Media de producción:", media_prod, "mil litros\n")
+cat("Desviación estándar:", round(desv_prod, 2), "mil litros\n")
+cat("Coeficiente de Variación:", round(coef_var, 2), "%\n")
+```
+# **2. Manipulación Estructurada con Data Frames**
+## 2.1 ¿Qué es un data.frame?
+Un data.frame es la **representación matricial tabular clásica**. Una tabla de base de datos o una hoja de Excel, donde cada fila representa una observación (ejemplo: un centro de cultivo o un predio) y cada columna representa una variable (ejemplo: biomasa, mortalidad, costo, comuna).
+
+Vamos a construir un conjunto de datos con 8 centros salmoneros ubicados en la Región de Los Lagos:
+
+```{r}
+# Creación manual de un data.frame representativo regional
+datos_salmon <- data.frame(
+  id_centro     = 101:108,
+  comuna        = c("Calbuco", "Quellón", "Castro", "Calbuco", "Hualaihué", "Quellón", "Chonchi", "Hualaihué"),
+  especie       = c("Salar", "Salar", "Coho", "Salar", "Trucha", "Coho", "Salar", "Salar"),
+  biomasa_ton   = c(1450, 1820, 920, 1600, 750, 1100, 1340, 1520),
+  mortalidad_pct= c(4.2, 5.8, 2.1, 6.4, 3.0, 2.8, 4.9, 5.1),
+  costo_usd_kg  = c(4.10, 4.35, 3.80, 4.60, 4.05, 3.90, 4.25, 4.40),
+  stringsAsFactors = FALSE
+)
+
+# Inspección de estructura
+datos_salmon
+```
+## 2.2 Selección e Indexación Matricial: datos[filas, columnas]
+En R base, la indexación de tablas se realiza con corchetes dobles usando la regla universal [Filas, Columnas]:
+
+* datos[1, ] $\rightarrow$ Fila 1 completa.
+* datos[, 3] $\rightarrow$ Columna 3 completa.
+* datos[1:3, c("comuna", "biomasa_ton")] $\rightarrow$ Filas 1 a 3 para las columnas indicadas.
+
+```{r}
+# Seleccionar los primeros 3 centros con su comuna y costo
+datos_salmon[1:3, c("comuna", "costo_usd_kg")]
+
+# Filtrar filas condicionalmente: Centros de Calbuco
+datos_salmon[datos_salmon$comuna == "Calbuco", ]
+
+# Centros con mortalidad superior al 4.5%
+datos_salmon[datos_salmon$mortalidad_pct > 4.5, c("id_centro", "especie", "mortalidad_pct")]
+```
+
+## 2.3 Eliminar y Agregar Columnas y Filas en R Base
+```{r}
+# 1. Crear una copia de respaldo para no modificar el original
+df_temp <- datos_salmon
+
+# 2. Agregar una nueva columna: Costo Total Estimado (USD)
+df_temp$costo_total_usd <- df_temp$biomasa_ton * 1000 * df_temp$costo_usd_kg
+
+# 3. Eliminar una columna asignándole NULL (equivalente a 'Eliminar Columna' en Excel)
+df_temp$costo_total_usd <- NULL
+
+# 4. Eliminar una fila específica por su índice (ej. eliminar la fila 4 con el signo negativo)
+df_sin_fila4 <- df_temp[-4, ]
+nrow(df_sin_fila4) # Teníamos 8, ahora quedan 7
+```
+# **3. Librerías y Paquetes en R**
+## 3.1 Introducción a las Librerías en R
+
+En su instalación base, R incluye un conjunto robusto de herramientas estadísticas y matemáticas fundamentales. Sin embargo, su verdadero potencial radica en su arquitectura modular basada en **paquetes** (*packages*): colecciones especializadas de funciones, datos y documentación desarrolladas por la comunidad académica y científica internacional.
+
+Para utilizar una herramienta externa en R, se distinguen siempre dos etapas:
+
+  1. **Instalación (`install.packages("nombre")`):** Se realiza una sola vez en el equipo (equivalente a descargar e instalar un complemento o programa en el computador).
+
+  2. **Carga en memoria (`library(nombre)`):** Se ejecuta en cada sesión o script donde se necesite usar (equivalente a abrir la aplicación para trabajar).
+
+```{r}
+# Instalación del ecosistema completo (solo una vez en la consola)
+# install.packages("tidyverse")
+
+# Carga de la librería para la sesión de trabajo
+library(tidyverse)
+```
+## 3.2 El Ecosistema `tidyverse`
+El `tidyverse` no es una herramienta aislada, sino una suite integrada de paquetes en **R** diseñados específicamente para la ciencia de datos y la analítica de negocios. Según la documentación oficial de sus creadores, todos sus componentes comparten una misma filosofía de diseño subyacente, estructuras de datos estandarizadas (`tibbles`) y una gramática común orientada al flujo de trabajo **tidy** data (datos limpios y ordenados).
+
+En términos de gestión, si **R base** se asemeja a una caja de herramientas dispersas donde cada instrumento opera bajo convenciones distintas, el `tidyverse` es el homólogo de suites empresariales como **Microsoft 365** o el entorno analítico integrado de **Power BI**.
+
+## 3.3 Librerías Principales del `tidyverse`
+Más allá de la transformación de tablas, el ecosistema articula librerías especializadas para cada fase del ciclo analítico:
+
+* **`ggplot2`**: Paquete estándar para visualización declarativa fundamentado en la Gramática de los Gráficos. Permite ensamblar gráficos por capas superponiendo datos, estéticas, geometrías y escalas.
+
+* **`tidyr`**: Proporciona herramientas para estructurar datos en formato ordenado (tidy data, donde cada variable es una columna y cada observación una fila) mediante funciones como pivot_longer() y pivot_wider().
+
+* **`readr`**: Diseñado para la importación rápida de archivos planos rectangulares (.csv, .tsv), reconociendo y parseando tipos de datos automáticamente.
+
+* **`purrr`**: Motor de programación funcional que optimiza la iteración sustituyendo bucles tradicionales (for) por operaciones vectorizadas concisas de la familia map().
+
+* **`tibble`**: Estructura de tabla modernizada que refina el clásico data.frame, optimizando la visualización en consola sin coerciones imprevistas de tipos de datos.
+
+* **`stringr`**: Biblioteca cohesiva orientada a la manipulación de cadenas de texto y expresiones regulares.
+
+* **`forcats`**: Especializada en el manejo y reordenamiento de factores y variables categóricas, elemento indispensable para el análisis econométrico con variables dummy.
+
+* **`lubridate`**: Paquete dedicado al análisis de fechas, periodos y marcas temporales, fundamental para series de tiempo económicas.
+
+# **4. Transformación y Agrupación con `dplyr`**
+El paquete `dplyr` (pieza clave del ecosistema `tidyverse`) es el estándar moderno para el análisis y transformación de datos en R. 
+Si en Excel estás acostumbrado a usar filtros por columna, fórmulas anidadas como ***BUSCARV, condicionales SI() y Tablas Dinámicas*** o si en Power BI construyes pasos de modelado en ***Power Query***, `dplyr` representa su homólogo programático directo: ofrece una velocidad de procesamiento significativamente superior, evita errores manuales por arrastre de celdas y genera flujos de trabajo 100% reproducibles y legibles.
+
+## 4.1 El Operador Pipeline: %>% y el nativo |>
+El operador `pipeline` transforma la manera en que redactamos operaciones en R. En lugar de anidar funciones unas dentro de otras (lo que en Excel obligaría a escribir fórmulas ilegibles como `=REDONDEAR(PROMEDIO(SI(...)))`), el operador conecta pasos secuenciales de izquierda a derecha.
+
+Mentalmente se lee como: "toma este conjunto de datos, Y **LUEGO** aplica la siguiente acción".
+
+En lugar de anidar funciones complejas como en Excel:
+
+> **`%>%`**: Introducido originalmente por el paquete `magrittr`. Requiere cargar la librería `dplyr` o `tidyverse`.
+
+> **`|>`**: Es el pipeline nativo incorporado directamente en R base (disponible a partir de la versión 4.1.0+). Ambos cumplen el mismo propósito operativo en la gran mayoría de las tareas de gestión.
+
+## 4.2 Ejemplo de uso del pipeline %>%
+```{r}
+# Sintaxis conceptual sin pipeline (anidada e incómoda de leer):
+# resumen <- summarise(group_by(filter(datos, condicion), grupo), media = mean(x))
+
+# Sintaxis optimizada con pipeline (fluida y secuencial):
+# resumen <- datos %>%
+#   filter(condicion) %>%
+#   group_by(grupo) %>%
+#   summarise(media = mean(x))
+```
+
+## 4.3 Las 5 funciones más populares de dplyr
+> **`filter()`**: ***Filtrado de Observaciones (Filas)***. Permite conservar únicamente aquellas filas que cumplen con una o más condiciones lógicas de interés, descartando el resto temporal o definitivamente sin alterar el archivo original.
+
+  * **Equivalente en Excel**: Hacer clic en la flecha de encabezado de una columna y aplicar un Filtro Automático de Texto o Número (por ejemplo, "Mayor que..." o seleccionar casillas específicas).
+
+  * **Operadores habituales**: == (exactamente igual), != (distinto de), >, <, >=, <=, & (Y lógico), | (O lógico) y %in% (pertenencia a un vector).
+
+
+>* select(): Selecciona, reordena o descarta columnas.
+
+>* mutate(): Crea nuevas columnas calculadas o transforma las existentes.
+* arrange(): Ordena las filas en función de una o más variables (ascendente o desc()).
+* summarise() (o summarize()): Reduce múltiples observaciones a un solo valor estadístico resumido (equivalente a los campos de valores en una Tabla Dinámica).
+
+```{r}
+# Ejemplo integral con los centros salmoneros
+analisis_salar <- datos_salmon %>%
+  # 1. Filtramos solo la especie Salar
+  filter(especie == "Salar") %>%
+  # 2. Creamos el indicador de costo total de mortalidad en USD
+  mutate(
+    perdida_mortalidad_ton = biomasa_ton * (mortalidad_pct / 100),
+    costo_perdida_usd = perdida_mortalidad_ton * 1000 * costo_usd_kg
+  ) %>%
+  # 3. Seleccionamos solo las variables clave de interés gerencial
+  select(id_centro, comuna, biomasa_ton, mortalidad_pct, costo_perdida_usd) %>%
+  # 4. Ordenamos de mayor a menor según la pérdida económica
+  arrange(desc(costo_perdida_usd))
+
+analisis_salar
+```
+## 3.3 El poder de group_by() y summarise() (Tablas Dinámicas)
+La combinación group_by() %>% summarise() es el equivalente directo a arrastrar variables a las zonas de Filas y Valores de una Tabla Dinámica en Excel.
+
+```{r}
+# Resumen gerencial por comuna productiva
+kpi_por_comuna <- datos_salmon %>%
+  group_by(comuna) %>%
+  summarise(
+    n_centros       = n(),                                # =CONTAR()
+    biomasa_total   = sum(biomasa_ton),                   # =SUMA()
+    mortalidad_prom = mean(mortalidad_pct),               # =PROMEDIO()
+    costo_promedio  = weighted.mean(costo_usd_kg, biomasa_ton) # Costo medio ponderado
+  ) %>%
+  arrange(desc(biomasa_total))
+
+kpi_por_comuna
+```
+
+5. Visualización Econométrica con ggplot2 (Actualizado a 2026)
+5.1 La Gramática de los Gráficos
+A diferencia de Excel o Power BI donde seleccionas plantillas predeterminadas, en ggplot2 construyes el gráfico agregando capas:
+
+data: Los datos tabulares.
+
+aes(): Mapeo de variables a coordenadas, colores o tamaños.
+
+geom_*: Formas geométricas (puntos, líneas, cajas).
+
+facet_*: Descomposición en subpaneles (small multiples).
+
+theme_*: Formato visual y tipográfico.
+
+5.2 Geometrías Fundamentales para la Gestión
+A. Dispersión y Ajuste Econométrico MCO / OLS (geom_point + geom_smooth)
+
+```{r}
+# Aseguramos variables económicas sobre el dataset ya conocido
+datos_grafico <- datos_salmon %>%
+  mutate(
+    # Ingreso total estimado en millones de CLP (suponiendo USD = $950 CLP y precio FOB $7.25 USD/kg)
+    ventas_millones_clp = round((biomasa_ton * 1000 * 7.25 * 950) / 1e6, 1),
+    # Costo total operacional en millones de CLP
+    costo_total_millones = round((biomasa_ton * 1000 * costo_usd_kg * 950) / 1e6, 1)
+  )
+```
+
+#### A. Dispersión y Ajuste Econométrico MCO / OLS (`geom_point` + `geom_smooth`)
+
+```{r scatter_ols, fig.width=8, fig.height=5}
+ggplot(datos_grafico, aes(x = biomasa_ton, y = ventas_millones_clp)) +
+  geom_point(aes(color = especie, size = mortalidad_pct), alpha = 0.8) +
+  geom_smooth(method = "lm", se = TRUE, color = "#2c3e50", linetype = "dashed") +
+  scale_color_manual(values = c("Salar" = "#e67e22", "Coho" = "#2980b9", "Trucha" = "#27ae60")) +
+  scale_y_continuous(labels = function(x) paste0("$", format(x, big.mark = "."), "M")) +
+  scale_x_continuous(labels = function(x) paste0(format(x, big.mark = "."), " ton")) +
+  labs(
+    title = "Relación entre Volumen de Cosecha y Facturación Bruta",
+    subtitle = "Centros salmoneros en Los Lagos con ajuste econométrico MCO (Mínimos Cuadrados Ordinarios)",
+    x = "Biomasa Cosechada (Toneladas)",
+    y = "Ventas Estimadas (Millones CLP)",
+    color = "Especie Cultivada",
+    size = "Mortalidad (%)",
+    caption = "Fuente: Elaboración de cátedra · Econometría para la Gestión 2026."
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", color = "#1a252f"),
+    legend.position = "bottom"
+  )
+```
+
+#### B. Distribución y Cuartiles (`geom_boxplot` + `geom_jitter`)
+
+```{r boxplot_sector, fig.width=8, fig.height=4.5}
+ggplot(datos_grafico, aes(x = comuna, y = costo_usd_kg, fill = comuna)) +
+  geom_boxplot(alpha = 0.6, outlier.colour = "red", width = 0.4) +
+  geom_jitter(width = 0.15, alpha = 0.7, size = 2.5) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    title = "Dispersión del Costo Operacional por Comuna",
+    subtitle = "Inspección de cuartiles, medianas y variabilidad geográfica en Los Lagos",
+    x = "Comuna de Emplazamiento",
+    y = "Costo Operacional (USD / Kg Cosechado)"
+  ) +
+  theme_light() +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(face = "bold")
+  )
+```  
+  
+
