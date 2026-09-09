@@ -37,10 +37,65 @@ Hasta ahora, su herramienta habitual ha sido Microsoft Excel y, con suerte, herr
 
 * **Rigidez analítica**: Estimar modelos multivariados, contrastar hipótesis robustas y evaluar supuestos econométricos en Excel requiere complementos inestables y pasos manuales tediosos.
 
-***R*** resuelve esto mediante código auditable, reproducible y robusto. Si ya saben estructurar una tabla dinámica o escribir fórmulas condicionales en Excel, aprender R solo requiere mapear esa intuición lógica a comandos claros.
+**R** resuelve esto mediante código auditable, reproducible y robusto. Si ya saben estructurar una tabla dinámica o escribir fórmulas condicionales en Excel, aprender R solo requiere mapear esa intuición lógica a comandos claros.
 
-# 1 **Fundamentos de R: Objetos y Operaciones**
-## 1.1 ¿Qué es un objeto en R?
+# **1 El Ecosistema de R y Entornos de Desarrollo**
+## 1.1 ¿Qué es R? El Motor Estadístico
+**R** es un lenguaje de programación interpretado y un entorno de computación estadística de ***código abierto*** (open-source), derivado del lenguaje `S` desarrollado originalmente en los Laboratorios Bell. A diferencia de las herramientas ofimáticas tradicionales estructuradas en cuadrículas rígidas (como hojas de cálculo), `R` fue concebido desde sus cimientos para el análisis numérico, la inferencia estadística, la econometría y la representación gráfica de alta precisión.
+
+Entre sus características fundamentales destacan:
+
+* **Lenguaje interpretado y orientado a objetos**: No requiere un proceso previo de compilación para ejecutarse; cada instrucción se evalúa línea a línea en tiempo real. En R, todo lo que existe es un objeto (desde un valor escalar hasta un modelo de regresión multivariado) y todo lo que ocurre es una llamada a una función.
+
+* **Vectorización nativa**: Las operaciones aritméticas y lógicas se aplican automáticamente a colecciones completas de datos sin necesidad de implementar bucles o iteraciones explícitas, lo que optimiza tanto la velocidad de cómputo como la legibilidad del código.
+
+* **Ecosistema extensible (CRAN)**: El núcleo de R se complementa con la ***Comprehensive R Archive Network (CRAN)***, una red centralizada con miles de paquetes especializados desarrollados por la comunidad científica y económica mundial para resolver problemas que van desde la econometría de series de tiempo hasta el modelamiento de machine learning.
+
+* **Reproducibilidad científica**: Permite generar flujos de trabajo transparentes y auditables, donde cada transformación de datos, cálculo econométrico y gráfico queda respaldado por un script ejecutable de principio a fin.
+
+## **1.2 RStudio**: El Entorno Integrado de Desarrollo (IDE)
+Para continuar, es necesario establecer una distinción conceptual crítica: `R` es el motor (el lenguaje y compilador estadístico), mientras que `RStudio` (desarrollado por Posit) es la carrocería y panel de control (Integrated Development Environment o IDE). ***Utilizar R sin RStudio equivale a interactuar directamente con una terminal de comandos pura, lo cual resulta poco intuitivo para proyectos analíticos complejos***.
+
+## 1.3 Funcionalidades clave de **RStudio**
+
+* **Gestión de Proyectos (.Rproj)**: Permite anclar el directorio de trabajo (working directory) a la raíz de la carpeta del proyecto, eliminando el uso de rutas absolutas locales (C:/Users/...) y garantizando la portabilidad del código entre diferentes equipos.
+
+* **Control de versiones integrado**: Dispone de una interfaz gráfica nativa para Git y GitHub, permitiendo registrar versiones intermedias (commits), sincronizar cambios remotos (push/pull) y auditar el historial analítico.
+
+* **Reportes reproducibles**: Integración directa con `R Markdown` y `Quarto`, herramientas que permiten amalgamar código R, fórmulas matemáticas en $\LaTeX$, salidas tabulares y prosa explicativa en documentos finales con formato HTML, PDF o presentaciones ejecutivas.
+
+**RStudio articula la sesión de trabajo en cuatro cuadrantes principales**:
+
+| Cuadrante Superior Izquierdo | Cuadrante Superior Derecho |
+| :--- | :--- |
+| **1. Editor de Scripts / RMarkdown (`Source`)**<br>• Archivos `.R`, `.Rmd`, `.qmd`<br>• Redacción y ejecución de código | **3. Entorno, Historial y Git (`Environment`)**<br>• Variables y objetos en memoria<br>• Conexiones y control de versiones |
+| **2. Consola Interactiva (`Console / Terminal`)**<br>• Ejecución inmediata línea a línea<br>• Mensajes del sistema y errores | **4. Sistema de Archivos y Salidas (`Files / Plots`)**<br>• Explorador de carpetas del proyecto<br>• Renderizado de gráficos, visor y ayuda |
+
+
+## 1.4 Otros Entornos para Ejecutar R
+Aunque RStudio es el estándar de la industria para computación estadística local, existen entornos alternativos con ventajas operativas específicas según las necesidades del proyecto:
+
+### ***Google Colaboratory (Google Colab)***
+Originalmente diseñado para flujos de trabajo en Python orientados a machine learning, Google Colab soporta de manera nativa la ejecución de kernels de R.
+
+* Ejecución basada en la nube: No requiere instalar R ni dependencias locales en el computador del usuario, ejecutándose directamente desde el navegador web.
+
+* Colaboración sincrónica: Funciona bajo el modelo de Google Drive, permitiendo que varios analistas editen, comenten y ejecuten cuadernos de código (notebooks) simultáneamente en tiempo real.
+
+* Uso recomendado: Talleres interactivos, sesiones docentes donde se busca evitar problemas de instalación local de software, o análisis que demandan recursos de cómputo en servidores remotos sin costo de infraestructura.
+
+>**Cómo activarlo**
+>Se puede iniciar un cuaderno configurado directamente para R ingresando a colab.to/r o modificando el entorno de ejecución en Entorno de ejecución > Cambiar tipo de entorno de ejecución > R.
+
+### Visual Studio Code (VS Code)
+El editor de código de Microsoft se ha transformado en un competidor directo gracias a extensiones especializadas como R Extension for Visual Studio Code y REditorSupport. Resulta idóneo cuando el analista trabaja en arquitecturas mixtas donde conviven R, Python, SQL y lenguajes web dentro del mismo repositorio.
+
+### Cuadernos Jupyter (JupyterLab / Jupyter Notebook)
+Entorno interactivo por celdas ampliamente utilizado en la academia científica. Mediante la instalación del paquete IRkernel, permite ejecutar R dentro de la infraestructura estándar de Jupyter, resultando muy eficiente para la exploración preliminar de datos y la enseñanza orientada a bloques modulares.
+
+
+# **2 Fundamentos de R: Objetos y Operaciones**
+## 2.1 ¿Qué es un objeto en R?
 En Excel, guardamos un valor en una celda con coordenadas (como =5000 en la celda B2). En R no existen "celdas fijas", sino objetos. **Un objeto** es una ***"caja con nombre"*** donde almacenamos cualquier cosa: un número, un texto, una fórmula, una tabla de datos completa o los resultados de una regresión lineal.
 
 El operador de asignación en R es **<-** (una flecha formada por el signo menor y un guion, equivalente al atajo de teclado Alt + - en Windows o Option + - en Mac).
@@ -60,7 +115,7 @@ margen_total <- margen_unitario * (toneladas_cosecha * 1000)
 margen_total
 
 ```
-## 1.2 Tipos de datos fundamentales
+## 2.2 Tipos de datos fundamentales
 Al igual que en Power BI (donde definimos el tipo de columna como Número entero, Texto o Verdadero/Falso), en R los datos tienen tipos esenciales:
 
 * **Numérico (numeric / double)**: Cifras continuas (ej. salarios, precios, tipo de cambio).
@@ -80,7 +135,7 @@ class(empresa)
 class(tipo_cambio)
 class(certificacion_bap)
 ```
-## 1.3 Vectores: Las "Columnas" de Excel
+## 2.3 Vectores: Las "Columnas" de Excel
 Un vector es una secuencia ordenada de datos del mismo tipo. Es la estructura básica en R y equivale exactamente a una columna unidimensional en una hoja de cálculo. **Se crea con la función c() (que significa combinar o concatenar)**.
 
 ```{r}
@@ -97,7 +152,7 @@ precio_con_bono <- precio_base * 1.05
 precio_con_bono
 ```
 
-## 1.4 Operaciones Matemáticas y Estadísticas Básicas
+## 2.4 Operaciones Matemáticas y Estadísticas Básicas
 En la gestión econométrica requerimos sintetizar métricas de tendencia central y dispersión.A continuación comparamos las funciones nativas de R con sus fórmulas equivalentes en Excel:
 
 | Métrica Estadística | Función en R | Función en Excel |
@@ -120,8 +175,8 @@ cat("Media de producción:", media_prod, "mil litros\n")
 cat("Desviación estándar:", round(desv_prod, 2), "mil litros\n")
 cat("Coeficiente de Variación:", round(coef_var, 2), "%\n")
 ```
-# **2. Manipulación Estructurada con Data Frames**
-## 2.1 ¿Qué es un data.frame?
+# **3. Manipulación Estructurada con Data Frames**
+## 3.1 ¿Qué es un data.frame?
 Un data.frame es la **representación matricial tabular clásica**. Una tabla de base de datos o una hoja de Excel, donde cada fila representa una observación (ejemplo: un centro de cultivo o un predio) y cada columna representa una variable (ejemplo: biomasa, mortalidad, costo, comuna).
 
 Vamos a construir un conjunto de datos con 8 centros salmoneros ubicados en la Región de Los Lagos:
@@ -141,7 +196,7 @@ datos_salmon <- data.frame(
 # Inspección de estructura
 datos_salmon
 ```
-## 2.2 Selección e Indexación Matricial: datos[filas, columnas]
+## 3.2 Selección e Indexación Matricial: datos[filas, columnas]
 En R base, la indexación de tablas se realiza con corchetes dobles usando la regla universal [Filas, Columnas]:
 
 * datos[1, ] $\rightarrow$ Fila 1 completa.
@@ -159,7 +214,7 @@ datos_salmon[datos_salmon$comuna == "Calbuco", ]
 datos_salmon[datos_salmon$mortalidad_pct > 4.5, c("id_centro", "especie", "mortalidad_pct")]
 ```
 
-## 2.3 Eliminar y Agregar Columnas y Filas en R Base
+## 3.3 Eliminar y Agregar Columnas y Filas en ***R Base***
 ```{r}
 # 1. Crear una copia de respaldo para no modificar el original
 df_temp <- datos_salmon
@@ -174,8 +229,8 @@ df_temp$costo_total_usd <- NULL
 df_sin_fila4 <- df_temp[-4, ]
 nrow(df_sin_fila4) # Teníamos 8, ahora quedan 7
 ```
-# **3. Librerías y Paquetes en R**
-## 3.1 Introducción a las Librerías en R
+# **4. Librerías y Paquetes en R**
+##  4.1 Introducción a las Librerías en R
 
 En su instalación base, R incluye un conjunto robusto de herramientas estadísticas y matemáticas fundamentales. Sin embargo, su verdadero potencial radica en su arquitectura modular basada en **paquetes** (*packages*): colecciones especializadas de funciones, datos y documentación desarrolladas por la comunidad académica y científica internacional.
 
@@ -192,12 +247,12 @@ Para utilizar una herramienta externa en R, se distinguen siempre dos etapas:
 # Carga de la librería para la sesión de trabajo
 library(tidyverse)
 ```
-## 3.2 El Ecosistema `tidyverse`
+## 4.2 El Ecosistema `tidyverse`
 El `tidyverse` no es una herramienta aislada, sino una suite integrada de paquetes en **R** diseñados específicamente para la ciencia de datos y la analítica de negocios. Según la documentación oficial de sus creadores, todos sus componentes comparten una misma filosofía de diseño subyacente, estructuras de datos estandarizadas (`tibbles`) y una gramática común orientada al flujo de trabajo **tidy** data (datos limpios y ordenados).
 
 En términos de gestión, si **R base** se asemeja a una caja de herramientas dispersas donde cada instrumento opera bajo convenciones distintas, el `tidyverse` es el homólogo de suites empresariales como **Microsoft 365** o el entorno analítico integrado de **Power BI**.
 
-## 3.3 Librerías Principales del `tidyverse`
+## 4.3 Librerías Principales del `tidyverse`
 Más allá de la transformación de tablas, el ecosistema articula librerías especializadas para cada fase del ciclo analítico:
 
 * **`ggplot2`**: Paquete estándar para visualización declarativa fundamentado en la Gramática de los Gráficos. Permite ensamblar gráficos por capas superponiendo datos, estéticas, geometrías y escalas.
@@ -216,87 +271,232 @@ Más allá de la transformación de tablas, el ecosistema articula librerías es
 
 * **`lubridate`**: Paquete dedicado al análisis de fechas, periodos y marcas temporales, fundamental para series de tiempo económicas.
 
-# **4. Transformación y Agrupación con `dplyr`**
-El paquete `dplyr` (pieza clave del ecosistema `tidyverse`) es el estándar moderno para el análisis y transformación de datos en R. 
-Si en Excel estás acostumbrado a usar filtros por columna, fórmulas anidadas como ***BUSCARV, condicionales SI() y Tablas Dinámicas*** o si en Power BI construyes pasos de modelado en ***Power Query***, `dplyr` representa su homólogo programático directo: ofrece una velocidad de procesamiento significativamente superior, evita errores manuales por arrastre de celdas y genera flujos de trabajo 100% reproducibles y legibles.
+# **5. La Librería `dplyr` y sus Verbos Elementales**
 
-## 4.1 El Operador Pipeline: %>% y el nativo |>
-El operador `pipeline` transforma la manera en que redactamos operaciones en R. En lugar de anidar funciones unas dentro de otras (lo que en Excel obligaría a escribir fórmulas ilegibles como `=REDONDEAR(PROMEDIO(SI(...)))`), el operador conecta pasos secuenciales de izquierda a derecha.
+El paquete `dplyr` es uno de los componentes más influyentes del ecosistema `tidyverse`. Diseñado por Hadley Wickham, fue concebido con un propósito claro: dotar a R de una **gramática consistente para la manipulación de datos**. 
 
-Mentalmente se lee como: "toma este conjunto de datos, Y **LUEGO** aplica la siguiente acción".
+En la programación tradicional, manipular tablas suele requerir combinaciones intrincadas de corchetes, índices y funciones auxiliares que dificultan la lectura del código. `dplyr` resuelve esto tratando las operaciones sobre datos no como comandos técnicos aislados, sino como un **lenguaje estructurado compuesto por verbos de acción**.
 
-En lugar de anidar funciones complejas como en Excel:
+## 5.1 ¿Por qué se les llama "verbos"?
+En la lingüística, un verbo denota una acción directa realizada sobre un sujeto. En `dplyr`, el "sujeto" es invariablemente una estructura tabular (`data.frame` o `tibble`) y las funciones son las acciones explícitas que modifican su estado: *filtrar*, *seleccionar*, *mutar*, *ordenar* y *resumir*. 
 
-> **`%>%`**: Introducido originalmente por el paquete `magrittr`. Requiere cargar la librería `dplyr` o `tidyverse`.
+Esta arquitectura gramatical comparte tres reglas de oro universales:
 
-> **`|>`**: Es el pipeline nativo incorporado directamente en R base (disponible a partir de la versión 4.1.0+). Ambos cumplen el mismo propósito operativo en la gran mayoría de las tareas de gestión.
+1. **El primer argumento siempre es el conjunto de datos.**
 
-## 4.2 Ejemplo de uso del pipeline %>%
+2. **Los argumentos posteriores especifican qué hacer con las columnas**, haciendo referencia a sus nombres directos sin necesidad de anteponer el operador `$` (como `datos$columna`).
+
+3. **El resultado siempre es un nuevo `data.frame`**, preservando intacta la fuente de datos original en memoria salvo que se sobreescriba explícitamente.
+
+## 5.2 Los 5 Verbos Elementales de `dplyr`
+
+### `filter()`: El verbo de restricción de observaciones (Filas)
+
+`filter()` actúa evaluando condiciones lógicas sobre los valores de una o más columnas para decidir qué filas permanecen en el análisis y cuáles se omiten. Cada fila se somete a una prueba booleana (`TRUE` o `FALSE`); si la condición resulta verdadera, la observación se conserva; si resulta falsa o indefinida (`NA`), se excluye.
+
+A diferencia del filtrado interactivo en planillas de cálculo (donde ocultamos filas visualmente pero corremos el riesgo de arrastrar celdas ocultas en fórmulas posteriores), `filter()` crea un subconjunto formal y riguroso. 
+
+Permite articular criterios múltiples mediante operadores relacionales y conectores lógicos:
+
+* **Comparadores**: `==` (estrictamente igual), `!=` (diferente de), `>`, `>=`, `<`, `<=`.
+
+* **Conectores**: `&` (intersección lógica Y: ambas condiciones deben cumplirse), `|` (unión lógica O: basta que una se cumpla), `!` (negación).
+
+* **Pertenencia**: `%in%` (evalúa si el valor coincide con alguno de los elementos dentro de un vector).
+
 ```{r}
-# Sintaxis conceptual sin pipeline (anidada e incómoda de leer):
-# resumen <- summarise(group_by(filter(datos, condicion), grupo), media = mean(x))
+# 1. Filtro con condición múltiple simultánea (Y lógico):
+# Centros en Calbuco con mortalidad estrictamente superior al 4.0%
+centros_calbuco_criticos <- filter(datos_salmon, comuna == "Calbuco" & mortalidad_pct > 4.0)
+centros_calbuco_criticos
 
-# Sintaxis optimizada con pipeline (fluida y secuencial):
-# resumen <- datos %>%
-#   filter(condicion) %>%
-#   group_by(grupo) %>%
-#   summarise(media = mean(x))
+# 2. Filtro por conjunto de pertenencia (%in%):
+# Centros sembrados con especies 'Coho' o 'Trucha'
+especies_secundarias <- filter(datos_salmon, especie %in% c("Coho", "Trucha"))
+especies_secundarias
 ```
 
-## 4.3 Las 5 funciones más populares de dplyr
-> **`filter()`**: ***Filtrado de Observaciones (Filas)***. Permite conservar únicamente aquellas filas que cumplen con una o más condiciones lógicas de interés, descartando el resto temporal o definitivamente sin alterar el archivo original.
+### `select()`: El verbo de proyección dimensional (Columnas)
+Mientras que `filter()` recorta la base horizontalmente (filas), `select()` lo hace verticalmente (columnas). En proyectos econométricos es habitual trabajar con bases que contienen decenas o cientos de variables recopiladas por sistemas ERP, encuestas o sensores, de las cuales solo un puñado son pertinentes para la formulación del modelo.
 
-  * **Equivalente en Excel**: Hacer clic en la flecha de encabezado de una columna y aplicar un Filtro Automático de Texto o Número (por ejemplo, "Mayor que..." o seleccionar casillas específicas).
+**`select()` no solo extrae variables de interés por su nombre, también permite**:
 
-  * **Operadores habituales**: == (exactamente igual), != (distinto de), >, <, >=, <=, & (Y lógico), | (O lógico) y %in% (pertenencia a un vector).
+* Reordenar el orden de presentación de las columnas.
 
+* Descartar variables no deseadas anteponiendo el signo menos (-).
 
->* select(): Selecciona, reordena o descarta columnas.
+* Renombrar variables en el mismo acto de selección mediante la sintaxis nuevo_nombre = nombre_antiguo.
 
->* mutate(): Crea nuevas columnas calculadas o transforma las existentes.
-* arrange(): Ordena las filas en función de una o más variables (ascendente o desc()).
-* summarise() (o summarize()): Reduce múltiples observaciones a un solo valor estadístico resumido (equivalente a los campos de valores en una Tabla Dinámica).
-
+* Usar selectores auxiliares avanzados como starts_with("costo"), ends_with("usd") o contains("pct").
 ```{r}
-# Ejemplo integral con los centros salmoneros
-analisis_salar <- datos_salmon %>%
-  # 1. Filtramos solo la especie Salar
-  filter(especie == "Salar") %>%
-  # 2. Creamos el indicador de costo total de mortalidad en USD
-  mutate(
-    perdida_mortalidad_ton = biomasa_ton * (mortalidad_pct / 100),
-    costo_perdida_usd = perdida_mortalidad_ton * 1000 * costo_usd_kg
-  ) %>%
-  # 3. Seleccionamos solo las variables clave de interés gerencial
-  select(id_centro, comuna, biomasa_ton, mortalidad_pct, costo_perdida_usd) %>%
-  # 4. Ordenamos de mayor a menor según la pérdida económica
-  arrange(desc(costo_perdida_usd))
+# 1. Seleccionar variables específicas y renombrar una de ellas en el trayecto
+reporte_costos <- select(datos_salmon, id_centro, ubicacion = comuna, costo_usd_kg)
+head(reporte_costos, 3)
 
-analisis_salar
+# 2. Descartar columnas técnicas que no se utilizarán en el informe
+vista_simplificada <- select(datos_salmon, -mortalidad_pct, -costo_usd_kg)
+head(vista_simplificada, 3)
 ```
-## 3.3 El poder de group_by() y summarise() (Tablas Dinámicas)
-La combinación group_by() %>% summarise() es el equivalente directo a arrastrar variables a las zonas de Filas y Valores de una Tabla Dinámica en Excel.
+
+### `mutate()`: El verbo de transformación y cálculo (Nuevas Variables)
+
+`mutate()` es la herramienta para la ingeniería de variables (feature engineering). Su función es ***incorporar nuevas columnas calculadas o transformar las preexistentes*** a partir de operaciones matemáticas, estadísticas o lógicas aplicadas sobre el conjunto de datos.
+
+La característica distintiva de `mutate()` frente a la sintaxis básica de R (donde se escribe datos$nueva_col <- ...) es su capacidad de vectorización inmediata y la posibilidad de encadenar cálculos secuenciales dentro de una misma instrucción.
+
+> Una variable creada en la primera línea de mutate() puede utilizarse inmediatamente en la línea siguiente dentro de la misma llamada.
 
 ```{r}
-# Resumen gerencial por comuna productiva
-kpi_por_comuna <- datos_salmon %>%
-  group_by(comuna) %>%
+# Creación de variables productivas y económicas en un único llamado
+datos_calculados <- mutate(
+  datos_salmon,
+  mortalidad_ton = biomasa_ton * (mortalidad_pct / 100), # Cálculo 1: Toneladas de biomasa perdidas por mortalidad
+  biomasa_neta_ton = biomasa_ton - mortalidad_ton, # Cálculo 2: Biomasa neta cosechable (utiliza la variable calculada arriba)
+  costo_operativo_total = biomasa_ton * 1000 * costo_usd_kg   # Cálculo 3: Valoración del costo operativo total invertido (USD)
+)
+
+# Mostramos solo las variables de interés recién calculadas
+head(select(datos_calculados, id_centro, mortalidad_ton, biomasa_neta_ton, costo_operativo_total), 4)
+```
+
+### `arrange()`: El verbo de ordenación relacional (Filas)
+`arrange()` modifica el orden en que se presentan las filas dentro de la tabla sin alterar su contenido ni descartar información. Es el equivalente a ordenar registros para inspeccionar valores extremos, priorizar asignaciones logísticas o clasificar entidades según desempeño.
+
+**Por defecto, `arrange()` organiza los datos de manera ascendente:**
+
+* ***Numérico***: de menor a mayor.
+* ***Caracter***: en orden alfabético estricto (A-Z).
+* ***Lógico***: los valores FALSE anteceden a TRUE.
+
+Para invertir este comportamiento y ordenar de forma descendente (de mayor a menor), se envuelve el nombre de la columna dentro de la ***función auxiliar `desc()`***. Además, si se indican múltiples columnas separadas por coma, se aplicará un criterio de desempate jerárquico.
+
+```{r}
+# 1. Ordenar de forma descendente por costo de producción por kilo
+ranking_costos <- arrange(datos_salmon, desc(costo_usd_kg))
+ranking_costos
+
+# 2. Ordenar alfabéticamente por especie y, ante empates, de mayor a menor biomasa
+orden_compuesto <- arrange(datos_salmon, especie, desc(biomasa_ton))
+head(orden_compuesto, 5)
+```
+
+### `summarise()`: El verbo de colapso y agregación estadística
+`summarise()` (o su variante ortográfica `summarize()`) colapsa múltiples filas de datos en una sola observación agregada que resume el comportamiento de las variables analizadas.
+
+Si `mutate()` mantiene inalterada la cantidad de filas de la tabla agregando información en paralelo, `summarise()` destruye el detalle individual para sintetizar métricas de tendencia central, dispersión o recuento:
+
+* **Centro**: `mean()`, `median()`.
+* **Dispersión**: `sd()`, `var()`, `IQR()`.
+* **Rango**: `min()`, `max()`.
+* **Frecuencia**: `n()` (conteo de filas), `n_distinct()` (conteo de valores únicos).
+
+```{r}
+# Resumen estadístico integral de toda la biomasa bajo análisis
+kpi_sectoriales <- summarise(
+  datos_salmon,
+  centros_totales   = n(),
+  biomasa_acumulada = sum(biomasa_ton),
+  mortalidad_media  = round(mean(mortalidad_pct), 2),
+  desv_mortalidad   = round(sd(mortalidad_pct), 2),
+  costo_maximo_usd  = max(costo_usd_kg)
+)
+
+kpi_sectoriales
+```
+
+## 5.3 Agrupación entre `group_by()` y `summarise()`
+`summarise()` por sí solo entrega una fotografía global. Sin embargo, en el análisis econométrico y la gestión de empresas casi nunca evaluamos el mercado como un bloque homogéneo: ***nos interesa contrastar grupos, segmentos de clientes, plantas operativas o zonas geográficas.***
+
+Aquí entra en juego `group_by()`. Esta función no altera visualmente la tabla ni reordena las columna. Su trabajo consisten en introducir una marca interna en el objeto indicando que, para cualquier verbo posterior, las operaciones ya no se ejecutarán sobre la base completa, sino de forma independiente dentro de cada grupo definido.
+
+La combinación **`group_by()` + `summarise()`** representa el modelo computacional de las Tablas Dinámicas en Excel:
+
+* **`group_by()`** define las variables cualitativas asignadas a las Filas.
+* **`summarise()`** define los estadísticos matemáticos asignados a los Valores.
+
+```{r}
+# Paso 1: Agrupar internamente el data.frame por comuna
+grupos_comuna <- group_by(datos_salmon, comuna)
+
+# Paso 2: Aplicar la síntesis estadística por cada grupo
+resumen_comunal <- summarise(
+  grupos_comuna,
+  cantidad_centros = n(),
+  biomasa_total    = sum(biomasa_ton),
+  mortalidad_prom  = round(mean(mortalidad_pct), 2),
+  costo_ponderado  = round(weighted.mean(costo_usd_kg, biomasa_ton), 2)
+)
+
+resumen_comunal
+```
+> **Buenas prácticas**: Una vez finalizado el cálculo resumido, si se continúa operando sobre la tabla resultante es recomendable añadir el argumento `.groups = "drop"` dentro de `summarise()`, o aplicar la función `ungroup()`, garantizando que la estructura de agrupación no interfiera con transformaciones futuras.
+
+Cuando se aplica `group_by()` con más de una variable categórica, `dplyr` mantiene activa la agrupación por el nivel superior si no se especifica lo contrario. Esto provoca que transformaciones posteriores (como calcular porcentajes o participaciones con `mutate()`) se calculen dentro de ese subgrupo y no sobre el total de la industria.
+
+A continuación se ilustra este problema y su solución con el caso de los centros salmoneros:
+
+#### Ejemplo
+Si queremos saber qué porcentaje del volumen regional total aporta cada especie en cada comuna, pero olvidamos desagrupar:
+
+```{r}
+# Agrupamos por dos niveles: comuna y especie
+resumen_agrupado <- datos_salmon %>%
+  group_by(comuna, especie) %>%
   summarise(
-    n_centros       = n(),                                # =CONTAR()
-    biomasa_total   = sum(biomasa_ton),                   # =SUMA()
-    mortalidad_prom = mean(mortalidad_pct),               # =PROMEDIO()
-    costo_promedio  = weighted.mean(costo_usd_kg, biomasa_ton) # Costo medio ponderado
+    biomasa_subtotal = sum(biomasa_ton)
+    # Por defecto, dplyr conserva la agrupación por 'comuna'
   ) %>%
-  arrange(desc(biomasa_total))
+  # Intentamos calcular la participación sobre el TOTAL REGIONAL:
+  mutate(
+    pct_sobre_total = (biomasa_subtotal / sum(biomasa_subtotal)) * 100
+  )
 
-kpi_por_comuna
+resumen_agrupado
+```
+**El problema:**
+En comunas con una sola especie (como Castro o Chonchi), `sum(biomasa_subtotal)` no sumó toda la región, sino únicamente los datos de esa comuna. Como resultado, la columna marca 100%, lo cual es un cálculo económico erróneo para el total regional.
+
+Para solucionar este problema, se puede implementar a través de `.groups = "drop"` o `ungroup()`
+
+Al eliminar explícitamente los metadatos de agrupación, la función `sum()` del siguiente paso opera sobre la columna completa:
+
+
+**Opción 1.** Directamente dentro de `summarise()` con `.groups = "drop"`
+```{r}
+resumen_correcto <- datos_salmon %>%
+  group_by(comuna, especie) %>%
+  summarise(
+    biomasa_subtotal = sum(biomasa_ton),
+    .groups = "drop" # Elimina toda agrupación inmediatamente
+  ) %>%
+  mutate(
+    # Ahora sum(biomasa_subtotal) suma las 10.400 toneladas totales de la tabla
+    participacion_regional_pct = round((biomasa_subtotal / sum(biomasa_subtotal)) * 100, 2)
+  ) %>%
+  arrange(desc(participacion_regional_pct))
+
+resumen_correcto
+```
+**Opción 2:** Usando el verbo complementario `ungroup()`
+Si prefieres mantener el flujo de verbos explícito, el resultado es idéntico:
+
+```{r}
+resumen_ungroup <- datos_salmon %>%
+  group_by(comuna, especie) %>%
+  summarise(biomasa_subtotal = sum(biomasa_ton)) %>%
+  ungroup() %>% # Rompe la estructura de grupos antes de mutar
+  mutate(
+    participacion_regional_pct = round((biomasa_subtotal / sum(biomasa_subtotal)) * 100, 2)
+  )
+
+resumen_ungroup
 ```
 
-5. Visualización Econométrica con ggplot2 (Actualizado a 2026)
-5.1 La Gramática de los Gráficos
+# 6 Visualización Econométrica con ggplot2 (Actualizado a 2026)
+## 6.1 La Gramática de los Gráficos
 A diferencia de Excel o Power BI donde seleccionas plantillas predeterminadas, en ggplot2 construyes el gráfico agregando capas:
 
-data: Los datos tabulares.
+* **data**: Los datos tabulares.
 
 aes(): Mapeo de variables a coordenadas, colores o tamaños.
 
@@ -306,7 +506,7 @@ facet_*: Descomposición en subpaneles (small multiples).
 
 theme_*: Formato visual y tipográfico.
 
-5.2 Geometrías Fundamentales para la Gestión
+## 5.2 Geometrías Fundamentales para la Gestión
 A. Dispersión y Ajuste Econométrico MCO / OLS (geom_point + geom_smooth)
 
 ```{r}
