@@ -1,0 +1,784 @@
+---
+title: "Apunte 4: Regresión Lineal Múltiple e Inferencia"
+subtitle: "Econometría para la gestión · Ingeniería Comercial"
+author: "Prof. Juan Pablo Carrasco"
+date: "`r format(Sys.time(), '%d de %B de %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: tango
+    code_folding: show
+    df_print: paged
+    self_contained: true
+---
+<style>
+body {
+  text-align: justify;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.width = 8,
+  fig.height = 5
+)
+```
+## Introducción
+
+En las decisiones comerciales de la Región de Los Lagos, desde estimar la demanda en plantas de procesamiento acuícola hasta optimizar remuneraciones en el sector servicios y retail, rara vez un fenómeno responde a una sola variable. 
+
+Cuando intentamos explicar los ingresos de los colaboradores únicamente a partir de sus años de escolaridad formal, ignoramos que el mercado laboral también premia la trayectoria acumulada y la lealtad laboral.
+
+El modelo de regresión lineal múltiple (RLM) formaliza el principio analítico de aislar efectos marginales:
+
+$$Y_i = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i} + \dots + \beta_k X_{ki} + u_i$$
+>   **Donde**:
+
+>   **$Y_i$** es la variable dependiente de interés empresarial,
+
+>   **$X_{ki}$** representa el conjunto de factores de control y 
+
+>   **$u_i$** es la perturbación estocástica.   
+
+
+**La RLM permite evaluar el impacto de $X_j$ manteniendo todo lo demás constante** (ceteris paribus).
+
+Sin embargo, la estimación puntual por Mínimos Cuadrados Ordinarios (MCO) provee únicamente estimadores basados en una muestra aleatoria particular. Dado que no disponemos del universo poblacional, surge el uso de la **inferencia estadística**, ***que permite determinar si los efectos detectados en la muestra son genuinos en la población o atribuibles al mero azar muestral.***
+
+## Fundamentos de la Inferencia Estadística bajo el Modelo Clásico de Regresión Lineal
+
+Para contrastar hipótesis sobre los parámetros $\beta$, el Modelo Clásico de Regresión Lineal Normal (MCRLN) añade el supuesto de normalidad sobre el término de error:
+
+$$u_i \mid \mathbf{X} \sim \text{NID}(0, \sigma^2)$$
+Esto establece que los errores son normales, independientes e idénticamente distribuidos con varianza homocedástica constante $\sigma^2$.   
+
+Bajo estos supuestos y el Teorema Central del Límite en muestras grandes, los estimadores MCO poseen distribuciones muestrales conocidas:
+
+$$\hat{\beta}_j \sim \mathcal{N}\left(\beta_j, \operatorname{Var}(\hat{\beta}_j)\right)$$
+Al desconocer la varianza poblacional del error $\sigma^2$, utilizamos su estimador insesgado:
+
+$$\hat{\sigma}^2 = \frac{\sum_{i=1}^n \hat{u}_i^2}{n - k - 1}$$
+Al estandarizar cada coeficiente dividiendo por su error estándar estimado $\text{se}(\hat{\beta}_j)$, el estadístico resultante se distribuye como una $t$ de Student con $n - k - 1$ grados de libertad:   
+
+$$t = \frac{\hat{\beta}_j - \beta_j}{\text{se}(\hat{\beta}_j)} \sim t_{(n - k - 1)}$$
+
+
+## Pruebas de Hipótesis: Significancia Global e Individual
+
+> **En econometría**, un coeficiente estimado ($\hat{\beta}_j$) distinto de cero en la muestra ***no garantiza un efecto real en la población***. La toma de decisiones exige rigor estadístico, por tanto, someter el modelo a pruebas de hipótesis estandarizadas. 
+
+A través de los estadísticos $F$ y $t$ (y sus respectivos *p-values*), evaluamos la **significancia global** del modelo y la **significancia individual** de cada predictor, asegurando que las conclusiones estratégicas se sustenten en evidencia estadísticamente robusta y no en fluctuaciones aleatorias de los datos.
+
+
+### **Significancia Conjunta o Global: Prueba $F$**
+
+Antes de analizar el impacto individual de cada variable explicativa, la metodología econométrica exige responder una pregunta fundamental: **¿Aporta este conjunto de regresores información relevante para explicar el comportamiento de $Y$, o el modelo propuesto equivale simplemente a pronosticar utilizando el promedio histórico ($\bar{Y}$)?**
+
+La prueba $F$ de Fisher-Snedecor evalúa la bondad de ajuste global contrastando el modelo especificado frente a un "modelo nulo" (aquel que solo incluye el intercepto $\beta_0$).
+
+
+#### **1. Planteamiento de Hipótesis**
+
+* **Hipótesis Nula ($H_0$):** Ninguna de las variables explicativas influye linealmente sobre la variable dependiente. El modelo carece de capacidad predictiva conjunta.
+
+  $$H_0: \beta_1 = \beta_2 = \dots = \beta_k = 0$$
+
+* **Hipótesis Alternativa ($H_1$):** Al menos uno de los parámetros estimados es estadísticamente distinto de cero. El modelo en su conjunto es válido.
+
+  $$H_1: \text{Al menos un } \beta_j \neq 0 \quad (j = 1, \dots, k)$$
+
+#### **2. Estadístico de Contraste ($F_{calc}$)**
+
+El estadístico **$F$** mide la relación entre la varianza que el modelo logra explicar y la varianza que queda sin explicar (el error), ajustando ambas magnitudes por sus respectivos grados de libertad. Se puede expresar tanto en función de las Sumas de Cuadrados como del Coeficiente de Determinación ($R^2$):
+
+$$F_{calc} = \frac{SCE / k}{SCR / (n - k - 1)} = \frac{R^2 / k}{(1 - R^2) / (n - k - 1)} \sim F_{(k, \, n - k - 1)}$$
+
+**Donde:**
+
+ * **$SCE$ (Suma de Cuadrados Explicada):** Variabilidad de $Y$ capturada por el modelo de regresión.
+ 
+ * **$SCR$ (Suma de Cuadrados de los Residuos):** Variabilidad de $Y$ no explicada (atribuida al término de error $u_i$).
+ 
+ * **$k$ (Grados de libertad del numerador):** Número de variables explicativas o regresores incluidos en el modelo (excluyendo la constante).
+ 
+ * **$n - k - 1$ (Grados de libertad del denominador):** Tamaño muestral ($n$) menos la cantidad total de parámetros estimados ($k$ pendientes más $1$ intercepto).
+
+
+**Intepretación del Estadístico $F$:** 
+
+Esta razón puede interpretarse como una métrica de **señal sobre ruido**.  El numerador ($SCE/k$) representa el Cuadrado Medio de la Regresión (la "señal" capturada por nuestras variables), mientras que el denominador ($SCR/(n-k-1)$) es el Cuadrado Medio del Error (el "ruido" o varianza residual $\hat{\sigma}^2$). 
+
+> Si el modelo es pertinente, la variabilidad explicada superará ampliamente a la residual, arrojando un valor $F_{calc}$ elevado.
+
+
+#### **3. Criterios de Decisión: Estadístico $F$, $F$ Crítico y Valor $p$**
+
+Para tomar una decisión estadística a un nivel de significancia $\alpha$ predefinido (usualmente $\alpha = 0.05$, equivalente a un 95% de confianza), existen dos enfoques equivalentes:
+
+**Enfoque del Valor Crítico ($F_{calc}$ vs. $F_{crit}$):**
+
+**$F$ Crítico ($F_{crit}$ o $F_{1-\alpha, \, k, \, n-k-1}$)** es el umbral teórico en la distribución de Fisher que delimita la zona de no rechazo de la zona de rechazo (ubicada exclusivamente en la cola derecha, ya que las sumas de cuadrados son siempre positivas).
+
+   * **Regla:** Si $F_{calc} > F_{crit}$, el estadístico cae en la región de rechazo. Se rechaza $H_0$.
+
+**Enfoque del Valor $p$ (*p-value*):**
+
+El *p-value* representa la probabilidad exacta de obtener un estadístico tan extremo o mayor que nuestro $F_{calc}$ asumiendo que $H_0$ es verdadera (es decir, el área bajo la curva a la derecha de $F_{calc}$).
+
+   * **Regla:** Si el $\text{p-valor} < \alpha$, se rechaza $H_0$.
+
+**Conclusión Gerencial:** Al rechazar $H_0$, concluimos que el modelo es **estadísticamente significativo en su conjunto**. Las variables seleccionadas logran reducir de forma sistemática y no aleatoria la incertidumbre al explicar o predecir $Y$.
+
+#### **4. Implementación y Cálculo en R**
+
+A continuación, simulamos un caso práctico de gestión (ej. explicar las **Ventas** en función de la inversión en **Publicidad Digital** y el tamaño de la **Fuerza de Ventas**) para extraer el estadístico $F$, el $F$ crítico y el *p-value*.
+
+
+```{r prueba-f-autocontenida, fig.width=8.5, fig.height=4.8, message=FALSE, warning=FALSE}
+library(ggplot2)
+
+# ==============================================================================
+# 1. PARÁMETROS DE ENTRADA (Escenario teórico editable)
+# ==============================================================================
+n    <- 60    # Tamaño muestral (ej. 60 observaciones)
+k    <- 3     # Número de variables explicativas o regresores
+R2   <- 0.22  # Coeficiente de Determinación hipotético (22% de varianza explicada)
+alfa <- 0.05  # Nivel de significancia (5%)
+
+# ==============================================================================
+# 2. CÁLCULO DE GRADOS DE LIBERTAD Y ESTADÍSTICOS (Wooldridge, 2015)
+# ==============================================================================
+gl_num <- k              # Grados de libertad del numerador
+gl_den <- n - k - 1      # Grados de libertad del denominador (56)
+
+# Estadístico F calculado a partir del R^2: F = (R^2 / k) / ((1 - R^2) / (n - k - 1))
+F_calc <- (R2 / gl_num) / ((1 - R2) / gl_den)
+
+# Valor F Crítico (umbral teórico al 95% de confianza) y Valor p
+F_crit  <- qf(p = 1 - alfa, df1 = gl_num, df2 = gl_den)
+p_valor <- pf(q = F_calc, df1 = gl_num, df2 = gl_den, lower.tail = FALSE)
+
+# ==============================================================================
+# 3. CONTROL DE ESCALA PARA EL GRÁFICO
+# ==============================================================================
+limite_x   <- max(F_crit * 2.5, 10)
+pos_f_calc <- ifelse(F_calc > limite_x, limite_x * 0.92, F_calc)
+
+# ==============================================================================
+# 4. VISUALIZACIÓN DE LA DISTRIBUCIÓN F Y REGIÓN CRÍTICA
+# ==============================================================================
+ggplot(data.frame(x = c(0, limite_x)), aes(x = x)) +
+  # A. Zona de No Rechazo (1 - alfa = 95% del área bajo la curva)
+  stat_function(fun = df, args = list(df1 = gl_num, df2 = gl_den),
+                xlim = c(0, F_crit), geom = "area", fill = "#cbd5e1", alpha = 0.7) +
+  
+  # B. Región Crítica o de Rechazo (alfa = 5% en la cola derecha)
+  stat_function(fun = df, args = list(df1 = gl_num, df2 = gl_den),
+                xlim = c(F_crit, limite_x), geom = "area", fill = "#ef4444", alpha = 0.55) +
+  
+  # C. Curva de densidad teórica de Fisher-Snedecor
+  stat_function(fun = df, args = list(df1 = gl_num, df2 = gl_den), 
+                linewidth = 1, color = "#0f172a", n = 500) +
+  
+  # D. Líneas verticales: F Crítico (Rojo punteado) vs. F Calculado (Azul sólido)
+  geom_vline(xintercept = F_crit, color = "#b91c1c", linetype = "dashed", linewidth = 0.9) +
+  geom_vline(xintercept = pos_f_calc, color = "#1d4ed8", linetype = "solid", linewidth = 1.1) +
+  
+  # E. Etiquetas conceptuales y de resultados
+  annotate("text", x = F_crit * 0.45, y = 0.22, 
+           label = "Zona de No Rechazo de H0\nH0: β1 = β2 = ... = βk = 0\n(Probabilidad = 95%)", 
+           color = "#334155", size = 3.2, fontface = "bold") +
+  annotate("text", x = F_crit + (limite_x - F_crit) * 0.28, y = 0.08, 
+           label = "Región de Rechazo (α = 5%)\nEvidencia a favor de H1", 
+           color = "#b91c1c", size = 3.2, fontface = "bold") +
+  annotate("label", x = F_crit, y = 0.58, 
+           label = paste0("F Crítico = ", round(F_crit, 2), "\n(Umbral α = 5%)"), 
+           color = "#b91c1c", fill = "#fef2f2", fontface = "bold", size = 3.3) +
+  annotate("label", x = pos_f_calc, y = 0.38, 
+           label = paste0("F Calc = ", round(F_calc, 2), 
+                          ifelse(F_calc > limite_x, " (Fuera de escala ->)", ""),
+                          "\n(p-valor = ", format.pval(p_valor, digits = 3, eps = 0.0001), ")"), 
+           color = "#1d4ed8", fill = "#eff6ff", fontface = "bold", size = 3.3,
+           hjust = ifelse(F_calc > limite_x, 1.05, 0.5)) +
+  
+  # F. Títulos y formato académico
+  labs(
+    title = paste0("Contraste de Significancia Global: Distribución F(", gl_num, ", ", gl_den, ")"),
+    subtitle = paste0("Escenario teórico (n = ", n, ", k = ", k, ", R² = ", R2 * 100, "%): Como F Calc (", 
+                      round(F_calc, 2), ") > F Crítico (", round(F_crit, 2), "), se rechaza H0"),
+    x = "Valores del Estadístico F de Fisher-Snedecor", 
+    y = "Densidad de Probabilidad f(F)",
+    caption = "Fuente: Elaboración propia en R con base en las formulaciones de Gujarati y Porter (2010) y Wooldridge (2015)."
+  ) +
+  scale_x_continuous(expand = c(0.01, 0)) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.08))) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13, color = "#0f172a"),
+    plot.subtitle = element_text(size = 10.5, color = "#334155", margin = margin(b = 10)),
+    plot.caption = element_text(size = 8.5, color = "#64748b", hjust = 0, margin = margin(t = 10)),
+    axis.title = element_text(face = "bold", color = "#1e293b"),
+    panel.grid.minor = element_blank()
+  )
+```
+
+**Interpretación del Contraste Global:** Al ver la distribución teórica $F_{(`r gl_num`, \, `r gl_den`)}$, se observa que el estadístico muestral calculado ($F_{calc} = `r round(F_calc, 2)`$, línea sólida azul) supera el umbral crítico teórico ($F_{crit} = `r round(F_crit, 2)`$, línea punteada roja), ubicándose de lleno dentro de la región crítica de la cola derecha. De manera consistente, el área bajo la curva a la derecha de nuestro estadístico arroja un $\text{p-valor} = `r format.pval(p_valor, digits = 3, eps = 0.0001)`$, inferior al nivel de significancia $\alpha = 0.05$. 
+
+> Siguiendo los criterios de Gujarati y Porter (2010) y Wooldridge (2015), **se rechaza la hipótesis nula ($H_0$) con un 95% de confianza**, concluyendo que el modelo econométrico es estadísticamente válido en su conjunto: el bloque de regresores seleccionados aporta información significativa que reduce el error de pronóstico respecto al uso del promedio simple ($\bar{Y}$).
+
+### **Significancia Individual: Prueba $t$**
+
+Una vez validado que el modelo es globalmente significativo mediante la prueba $F$, la metodología econométrica exige evaluar el aporte marginal de cada regresor por separado: **¿Tiene la variable explicativa $X_j$ un efecto real y estadísticamente significativo sobre $Y$ manteniendo constantes las demás variables del modelo (*ceteris paribus*), o su coeficiente estimado ($\hat{\beta}_j$) es distinto de cero solo por azar muestral?**
+
+La prueba $t$ de Student evalúa la relevancia individual de cada predictor contrastando si su parámetro poblacional difiere significativamente de un valor hipotético (usualmente cero, lo que representa ausencia de efecto parcial).
+
+#### **1. Planteamiento de Hipótesis**
+
+* **Hipótesis Nula ($H_0$):** La variable explicativa $X_j$ no tiene influencia lineal sobre $Y$ una vez controlado el efecto de los demás regresores. Su impacto parcial poblacional es nulo.
+
+  $$H_0: \beta_j = 0$$
+
+* **Hipótesis Alternativa ($H_1$):** La variable explicativa $X_j$ posee un efecto parcial estadísticamente distinto de cero (positivo o negativo) sobre la variable dependiente.
+
+  $$H_1: \beta_j \neq 0$$
+
+#### **2. Estadístico de Contraste ($t_{calc}$)**
+
+Bajo el supuesto de normalidad en las perturbaciones estocásticas (o asintóticamente en muestras grandes), el estadístico **$t$** estandariza la distancia entre el coeficiente estimado por MCO ($\hat{\beta}_j$) y el valor planteado en la hipótesis nula ($\beta_j^0 = 0$), dividiendo dicha diferencia por su error estándar de estimación:
+
+$$t_{calc} = \frac{\hat{\beta}_j - \beta_j^0}{ee(\hat{\beta}_j)} = \frac{\hat{\beta}_j}{ee(\hat{\beta}_j)} \sim t_{(n - k - 1)}$$
+
+**Donde:**
+
+ * **$\hat{\beta}_j$ (Coeficiente Estimado):** Efecto marginal estimado de la variable $X_j$ sobre $Y$ en la muestra.
+ 
+ * **$ee(\hat{\beta}_j)$ (Error Estándar del Estimador):** Medida de la dispersión o incertidumbre muestral asociada a la estimación del parámetro ($\sqrt{\widehat{\text{Var}}(\hat{\beta}_j)}$).
+ 
+ * **$n - k - 1$ (Grados de libertad):** Tamaño muestral ($n$) menos el número total de parámetros estimados en la regresión ($k$ pendientes más $1$ intercepto).
+
+**Interpretación del Estadístico $t$:** 
+
+Al igual que en la prueba global, este cociente opera como una razón de **señal sobre ruido** a nivel individual. El numerador ($\hat{\beta}_j$) mide la magnitud de la "señal" o efecto económico detectado, mientras que el denominador ($ee(\hat{\beta}_j)$) cuantifica el "ruido" o imprecisión de esa medición (influenciado por la varianza del error y la colinealidad entre regresores).
+
+> Si una variable explicativa es verdaderamente relevante para la gestión, la magnitud de su coeficiente estimado superará al menos el doble de su error estándar, generando un valor $|t_{calc}|$ elevado (regla práctica de $|t| > 2$).
+
+#### **3. Criterios de Decisión: Estadístico $t$, $t$ Crítico y Valor $p$**
+
+Dado que la hipótesis alternativa habitual es bilateral ($\beta_j \neq 0$), el nivel de significancia $\alpha$ (usualmente $\alpha = 0.05$) se reparte simétricamente en **ambas colas de la distribución** ($\alpha/2 = 0.025$ en cada extremo):
+
+**Enfoque del Valor Crítico ($|t_{calc}|$ vs. $t_{crit}$):**
+
+**$t$ Crítico ($\pm t_{crit}$ o $\pm t_{1-\alpha/2, \, n-k-1}$)** define los dos umbrales simétricos en la distribución $t$ de Student que delimitan la región central de no rechazo frente a las dos colas críticas de rechazo.
+
+   * **Regla:** Si $|t_{calc}| > t_{crit}$ (es decir, si $t_{calc} > t_{crit}$ o bien $t_{calc} < -t_{crit}$), el estadístico cae en alguna de las dos regiones de rechazo. Se rechaza $H_0$.
+
+**Enfoque del Valor $p$ (*p-value*):**
+
+En un contraste bilateral, el *p-value* representa la probabilidad acumulada en **ambas colas** de obtener un estadístico tan o más extremo que $|t_{calc}|$ asumiendo que $H_0$ es verdadera ($2 \times P(T > |t_{calc}|)$).
+
+   * **Regla:** Si el $\text{p-valor} < \alpha$, se rechaza $H_0$.
+
+**Conclusión Gerencial:** Al rechazar $H_0$, concluimos que la variable $X_j$ es **estadísticamente significativa a nivel individual**. Existe evidencia empírica suficiente para afirmar que las variaciones en dicha palanca de gestión producen un cambio sistemático sobre $Y$, justificando su permanencia en el modelo y su uso para la toma de decisiones.
+
+#### **4. Implementación y Cálculo en R**
+
+A continuación, evaluamos un escenario teórico para un regresor individual (ej. el impacto de la **Inversión en Publicidad Digital** sobre las **Ventas**), calculando a partir de su coeficiente estimado ($\hat{\beta}_j$) y su error estándar ($ee$) el estadístico $t$, los umbrales críticos bilaterales y el *p-value*:
+
+```{r prueba-t-autocontenida, fig.width=8.5, fig.height=4.8, message=FALSE, warning=FALSE}
+library(ggplot2)
+
+# ==============================================================================
+# 1. PARÁMETROS DE ENTRADA (Escenario teórico editable)
+# ==============================================================================
+n       <- 60    # Tamaño muestral (ej. 60 observaciones)
+k       <- 3     # Número total de regresores en el modelo
+beta_j  <- 1.85  # Coeficiente estimado para la variable X_j (puede ser + o -)
+ee_beta <- 0.72  # Error estándar del estimador ee(beta_j)
+alfa    <- 0.05  # Nivel de significancia (5% repartido en dos colas: 2.5% c/u)
+
+# ==============================================================================
+# 2. CÁLCULO DE GRADOS DE LIBERTAD Y ESTADÍSTICOS (Wooldridge, 2015)
+# ==============================================================================
+gl_res <- n - k - 1      # Grados de libertad de los residuos (56)
+
+# Estadístico t calculado bajo H0: beta_j = 0 -> t = beta_j / ee(beta_j)
+t_calc <- beta_j / ee_beta
+
+# Valor t Crítico bilateral (percentil 1 - alfa/2) y Valor p a dos colas
+t_crit  <- qt(p = 1 - (alfa / 2), df = gl_res)
+p_valor <- 2 * pt(q = abs(t_calc), df = gl_res, lower.tail = FALSE)
+
+# ==============================================================================
+# 3. CONTROL DE ESCALA SIMÉTRICA PARA EL GRÁFICO
+# ==============================================================================
+limite_x   <- max(t_crit * 2.0, 4.2)
+pos_t_calc <- ifelse(abs(t_calc) > limite_x, sign(t_calc) * limite_x * 0.92, t_calc)
+
+# ==============================================================================
+# 4. VISUALIZACIÓN DE LA DISTRIBUCIÓN t DE STUDENT (PRUEBA BILATERAL)
+# ==============================================================================
+ggplot(data.frame(x = c(-limite_x, limite_x)), aes(x = x)) +
+  # A. Zona Central de No Rechazo (1 - alfa = 95% del área bajo la curva)
+  stat_function(fun = dt, args = list(df = gl_res),
+                xlim = c(-t_crit, t_crit), geom = "area", fill = "#cbd5e1", alpha = 0.7) +
+  
+  # B. Regiones Críticas o de Rechazo en ambas colas (alfa/2 = 2.5% en cada extremo)
+  stat_function(fun = dt, args = list(df = gl_res),
+                xlim = c(-limite_x, -t_crit), geom = "area", fill = "#ef4444", alpha = 0.55) +
+  stat_function(fun = dt, args = list(df = gl_res),
+                xlim = c(t_crit, limite_x), geom = "area", fill = "#ef4444", alpha = 0.55) +
+  
+  # C. Curva de densidad teórica t de Student
+  stat_function(fun = dt, args = list(df = gl_res), 
+                linewidth = 1, color = "#0f172a", n = 500) +
+  
+  # D. Líneas verticales: Umbrales t Críticos (Rojo punteado) vs. t Calculado (Azul sólido)
+  geom_vline(xintercept = c(-t_crit, t_crit), color = "#b91c1c", linetype = "dashed", linewidth = 0.9) +
+  geom_vline(xintercept = pos_t_calc, color = "#1d4ed8", linetype = "solid", linewidth = 1.1) +
+  
+  # E. Etiquetas conceptuales y de resultados
+  annotate("text", x = 0, y = 0.16, 
+           label = "Zona de No Rechazo de H0\nH0: βj = 0\n(Probabilidad = 95%)", 
+           color = "#334155", size = 3.2, fontface = "bold") +
+  annotate("text", x = -t_crit - (limite_x - t_crit) * 0.45, y = 0.05, 
+           label = "Rechazo\n(α/2 = 2.5%)", 
+           color = "#b91c1c", size = 3.0, fontface = "bold") +
+  annotate("text", x = t_crit + (limite_x - t_crit) * 0.45, y = 0.05, 
+           label = "Rechazo\n(α/2 = 2.5%)", 
+           color = "#b91c1c", size = 3.0, fontface = "bold") +
+  annotate("label", x = -t_crit, y = 0.34, 
+           label = paste0("-t Crítico = ", round(-t_crit, 2)), 
+           color = "#b91c1c", fill = "#fef2f2", fontface = "bold", size = 3.2) +
+  annotate("label", x = t_crit, y = 0.34, 
+           label = paste0("+t Crítico = +", round(t_crit, 2)), 
+           color = "#b91c1c", fill = "#fef2f2", fontface = "bold", size = 3.2) +
+  annotate("label", x = pos_t_calc, y = 0.24, 
+           label = paste0("t Calc = ", round(t_calc, 2), 
+                          ifelse(abs(t_calc) > limite_x, " (Fuera de escala)", ""),
+                          "\n(p-valor = ", format.pval(p_valor, digits = 3, eps = 0.0001), ")"), 
+           color = "#1d4ed8", fill = "#eff6ff", fontface = "bold", size = 3.3,
+           hjust = ifelse(abs(t_calc) > limite_x, ifelse(t_calc > 0, 1.05, -0.05), 0.5)) +
+  
+  # F. Títulos y formato académico
+  labs(
+    title = paste0("Contraste de Significancia Individual (Bilateral): Distribución t(", gl_res, ")"),
+    subtitle = paste0("Escenario (βj = ", beta_j, ", ee = ", ee_beta, "): Como |t Calc| (", 
+                      round(abs(t_calc), 2), ") > t Crítico (", round(t_crit, 2), "), se rechaza H0"),
+    x = "Valores del Estadístico t de Student", 
+    y = "Densidad de Probabilidad f(t)",
+    caption = "Fuente: Elaboración propia en R con base en las formulaciones de Gujarati y Porter (2010) y Wooldridge (2015)."
+  ) +
+  scale_x_continuous(expand = c(0.01, 0)) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.08))) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13, color = "#0f172a"),
+    plot.subtitle = element_text(size = 10.5, color = "#334155", margin = margin(b = 10)),
+    plot.caption = element_text(size = 8.5, color = "#64748b", hjust = 0, margin = margin(t = 10)),
+    axis.title = element_text(face = "bold", color = "#1e293b"),
+    panel.grid.minor = element_blank()
+  )
+```
+
+**Interpretación del Contraste Individual:** La visualización de la distribución bilateral $t_{(`r gl_res`)}$ muestra que el estadístico calculado para el regresor ($t_{calc} = `r round(t_calc, 2)`$, línea sólida azul) rebasa la frontera de no rechazo delimitada por los valores críticos simétricos ($\pm t_{crit} = \pm `r round(t_crit, 2)`$, líneas punteadas rojas), situándose en la zona de rechazo (cola `r ifelse(t_calc > 0, "derecha", "izquierda")`). Asimismo, la probabilidad acumulada en ambos extremos corresponde a un $\text{p-valor} = `r format.pval(p_valor, digits = 3, eps = 0.0001)` < 0.05$. 
+
+> Por lo tanto, **se rechaza $H_0: \beta_j = 0$ al 95% de confianza**, confirmando que la variable explicativa posee un efecto parcial (*ceteris paribus*) estadísticamente distinto de cero. Desde una perspectiva gerencial, la evidencia empírica respalda que esta variable constituye una palanca de gestión relevante para explicar o intervenir sobre la variable dependiente.
+
+
+## Estimación por Intervalos de Confianza
+
+Una vez superadas las pruebas de significancia global (Prueba $F$) e individual (Prueba $t$), las cuales certifican que las variables seleccionadas poseen un efecto real y no producto del azar, el análisis econométrico da un paso crucial hacia la aplicación práctica: **pasar de la comprobación de hipótesis a la cuantificación precisa de la magnitud y la incertidumbre**. 
+
+Validar que un coeficiente es estadísticamente distinto de cero (rechazar $H_0$) es indispensable, pero para la toma de decisiones gerenciales (*como fijar políticas de compensación, evaluar presupuestos o proyectar ventas*) se requiere conocer los rangos plausibles de variación. 
+
+> Es aquí donde la **Estimación por Intervalos de Confianza** y las bandas de proyección se convierten en las herramientas definitivas de la analítica de gestión.
+
+El estimador puntual $\hat{\beta}_j$ entrega un valor único pero sensible a las variaciones de la muestra. 
+
+***Los Intervalos de Confianza*** (IC) entregan un rango que cuantifica la precisión del estimador:   
+
+$$\text{IC}_{1-\alpha}(\beta_j) = \left[ \hat{\beta}_j - t_{\alpha/2, \, n-k-1} \cdot \text{se}(\hat{\beta}_j) \, , \; \hat{\beta}_j + t_{\alpha/2, \, n-k-1} \cdot \text{se}(\hat{\beta}_j) \right]$$
+
+### **Interpretación** 
+
+Para comprender correctamente el intervalo de confianza, es crucial distinguir entre una variable aleatoria y un parámetro poblacional fijo:   
+
+> **Lo que NO significa:** "Existe un 95% de probabilidad de que el verdadero $\beta_j$ pertenezca al intervalo $[L_{\text{inf}}, L_{\text{sup}}]$."
+
+En la inferencia clásica, el parámetro poblacional $\beta_j$ es una constante fija y determinista (desconocida, pero única). No es una variable aleatoria, por lo que carece de una función de probabilidad propia. Una vez calculados los límites numéricos con los datos muestrales, **el parámetro está o no está** dentro del rango. Por tanto, la probabilidad formal en ese punto específico es $1$ o $0$. Asignarle una probabilidad a $\beta_j$ corresponde al enfoque bayesiano, no al método clásico de MCO.
+
+> **Lo que SÍ significa:** "Si tomáramos 100 muestras aleatorias idénticas de la población y construyéramos un intervalo al 95% para cada una, en promedio 95 de esos 100 intervalos contendrán el verdadero parámetro poblacional."
+
+El elemento estocástico (aleatorio) son los extremos del intervalo, ya que se construyen a partir del estimador $\hat{\beta}_j$ y de su error estándar $\text{se}(\hat{\beta}_j)$, los cuales varían de una muestra a otra.   
+
+La interpretación formal establece que, **si extrajéramos un número infinito de muestras independientes de igual tamaño de la misma población y calculáramos un intervalo al 95% para cada una, a la larga, exactamente el 95% de esos intervalos calculados contendrá al verdadero valor $\beta_j$**, mientras que el 5% restante lo dejará fuera.
+
+> **Regla de Inferencia Directa**: Si el intervalo de confianza al 95% no incluye el cero, se rechaza automáticamente la hipótesis nula bilateral $H_0: \beta_j = 0$ al nivel de significancia del 5%.
+
+```{r, fig.width=8.5, fig.height=5.2, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+
+# ==============================================================================
+# 1. PARÁMETROS TEÓRICOS POBLACIONALES (Sin necesidad de datos externos)
+# ==============================================================================
+set.seed(42)       # Semilla para reproducibilidad pedagógica
+M         <- 20    # Número de muestras hipotéticas extraídas (ej. 20 estudios)
+n         <- 60    # Tamaño muestral de cada estudio
+k         <- 3     # Número de regresores
+gl_res    <- n - k - 1
+alfa      <- 0.05  # Nivel de significancia (IC al 95%)
+
+beta_real <- 2.50  # Verdadero parámetro poblacional desconocido (βj = 2.50)
+ee_teor   <- 0.65  # Error estándar teórico del estimador
+
+# ==============================================================================
+# 2. SIMULACIÓN DE M INTERVALOS DE CONFIANZA (Enfoque Gujarati y Porter, 2010)
+# ==============================================================================
+t_crit <- qt(1 - alfa / 2, df = gl_res)
+
+sim_ic <- tibble(
+  muestra  = factor(1:M),
+  # Cada muestra arroja un beta estimado distinto alrededor de beta_real
+  beta_hat = rnorm(M, mean = beta_real, sd = ee_teor),
+  # Pequeña variación muestral en el error estándar estimado
+  ee_hat   = ee_teor * sqrt(rchisq(M, df = gl_res) / gl_res),
+  # Límites inferior y superior del IC al 95%
+  ic_low   = beta_hat - t_crit * ee_hat,
+  ic_high  = beta_hat + t_crit * ee_hat
+) %>%
+  mutate(
+    # ¿El intervalo logró capturar al verdadero parámetro poblacional βj?
+    Captura = ifelse(ic_low <= beta_real & ic_high >= beta_real,
+                     "Captura el verdadero βj (1 - α = 95%)",
+                     "No captura βj (Error muestral α = 5%)")
+  )
+
+# ==============================================================================
+# 3. VISUALIZACIÓN CONCEPTUAL DEL INTERVALO DE CONFIANZA
+# ==============================================================================
+ggplot(sim_ic, aes(x = beta_hat, y = muestra, color = Captura)) +
+  # A. Línea de la Hipótesis Nula de no efecto (H0: βj = 0)
+  geom_vline(xintercept = 0, linetype = "dotted", color = "#64748b", linewidth = 0.9) +
+  
+  # B. Línea del Verdadero Parámetro Poblacional (βj = 2.50)
+  geom_vline(xintercept = beta_real, linetype = "dashed", color = "#0f172a", linewidth = 1) +
+  
+  # C. Bandas de los Intervalos de Confianza y Estimaciones Puntuales
+  geom_errorbarh(aes(xmin = ic_low, xmax = ic_high), height = 0.35, linewidth = 0.9) +
+  geom_point(size = 2.6) +
+  
+  # D. Anotaciones conceptuales de lectura
+  annotate("label", x = beta_real, y = M + 1.2, 
+           label = paste0("Verdadero Parámetro\nPoblacional (βj = ", beta_real, ")"), 
+           color = "#0f172a", fill = "#f8fafc", fontface = "bold", size = 3.2) +
+  annotate("label", x = 0, y = M + 1.2, 
+           label = "Umbral H0: βj = 0\n(Ausencia de efecto)", 
+           color = "#475569", fill = "#f1f5f9", fontface = "italic", size = 3.1) +
+  
+  # E. Escalas de color y formato académico
+  scale_color_manual(
+    name   = "Resultado del Intervalo:",
+    values = c("Captura el verdadero βj (1 - α = 95%)" = "#2563eb",
+               "No captura βj (Error muestral α = 5%)" = "#dc2626")
+  ) +
+  scale_y_discrete(expand = expansion(add = c(0.8, 2.2))) +
+  labs(
+    title = "Interpretación Conceptual del Intervalo de Confianza al 95% (20 Muestras)",
+    subtitle = "Cada barra es un IC construido con una muestra distinta: el centro (•) es β̂j y el ancho es ± t_crit · ee(β̂j)",
+    x = "Valores del Parámetro Estimado e Intervalos de Confianza",
+    y = "Muestras Aleatorias Independientes (m = 1, ..., 20)",
+    caption = "Fuente: Elaboración propia en R con base en el diseño conceptual de Gujarati y Porter (2010) y Wooldridge (2015)."
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13, color = "#0f172a"),
+    plot.subtitle = element_text(size = 10.5, color = "#334155", margin = margin(b = 10)),
+    plot.caption = element_text(size = 8.5, color = "#64748b", hjust = 0, margin = margin(t = 10)),
+    axis.title = element_text(face = "bold", color = "#1e293b"),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold"),
+    panel.grid.minor = element_blank()
+  )
+```
+
+> **Interpretación del Gráfico Conceptual:** La visualización ilustra simultáneamente dos principios econométricos fundamentales:
+
+1. **Naturaleza estocástica del intervalo (Línea negra segmentada en $\beta_j = 2.50$):** A pesar de provenir de la misma población, cada muestra arroja una estimación puntual distinta (puntos centrales $\hat{\beta}_j$). De las $20$ muestras extraídas, $19$ intervalos (en azul, el $95\%$) cruzan la línea vertical del verdadero parámetro poblacional $\beta_j = 2.50$, mientras que $1$ muestra (en rojo, el $5\%$ esperado por $\alpha = 0.05$) cae fuera por azar muestral. 
+
+En la práctica profesional solo disponemos de **una única muestra**, pero sabemos que el procedimiento tiene un $95\%$ de fiabilidad de contener la verdad poblacional.
+
+2. **Dualidad con la Prueba $t$ individual (Línea gris punteada en $H_0: \beta_j = 0$):** Cualquier intervalo que no cruce la línea del cero permite rechazar $H_0: \beta_j = 0$ al $5\%$ de significancia, confirmando un efecto estadísticamente significativo.
+
+## Aplicación Práctica en R
+
+Para consolidar el proceso de inferencia revisados teóricamente, llevaremos a cabo un flujo de trabajo econométrico completo aplicado a la gestión del capital humano y políticas de compensación.
+
+### El Modelo Salarial de Wooldridge 
+
+Utilizaremos el dataset `wage1` del paquete econométrico `wooldridge`. Estimaremos un modelo semilogarítmico (log-lineal) para evaluar el retorno salarial:   
+
+$$\ln(\text{wage}) = \beta_0 + \beta_1 \text{educ} + \beta_2 \text{exper} + \beta_3 \text{tenure} + u$$
+
+Donde:
+
+`lwage`: Logaritmo natural del salario por hora en dólares.
+
+`educ`: Años de educación formal cursada.
+
+`exper`: Años de experiencia laboral en el mercado.
+
+`tenure`: Años de permanencia en la empresa actual.
+
+
+**¿Por qué transformar el salario a logaritmo ($\ln(\text{wage})$)?**
+En datos salariales y financieros, la variable en niveles (`wage`) suele presentar una fuerte asimetría positiva (concentración en salarios bajos y medios con una cola larga hacia salarios altos), lo que vulnera el supuesto de normalidad y homocedasticidad de los errores. Como explican Gujarati y Porter (2010), aplicar el logaritmo natural comprime la escala, estabiliza la varianza residual y otorga una ventaja interpretativa clave para la gestión: cada coeficiente $\hat{\beta}_j$ multiplicado por $100$ mide la **semielasticidad** o el **cambio porcentual aproximado en el salario** ante el incremento de una unidad (un año adicional) en el regresor $X_j$.
+
+**Proceso Exploratorio Previo a la Estimación:**
+Antes de ejecutar Mínimos Cuadrados Ordinarios (MCO), la metodología exige inspeccionar la distribución de las variables y su estructura de correlaciones bivariadas. Esto nos permite verificar rangos lógicos (ausencia de valores atípicos extremos o errores de codificación) y descartar problemas severos de **multicolinealidad** entre las variables explicativas (`educ`, `exper`, `tenure`) que pudieran inflar artificialmente los errores estándar en nuestras pruebas $t$.
+
+```{r}
+library(wooldridge)
+library(ggplot2)
+library(dplyr)
+library(broom)
+library(corrplot)
+
+# Cargar dataset
+data("wage1")
+
+# Variables de gestión
+vars <- c("wage", "lwage", "educ", "exper", "tenure")
+datos_modelo <- wage1 %>% select(all_of(vars))
+
+# Estadísticos descriptivos básicos
+summary(datos_modelo)
+
+# Matriz de Correlación
+cor_matrix <- cor(datos_modelo, use = "complete.obs")
+round(cor_matrix, 3)
+
+# Visualización de correlaciones
+corrplot(
+  cor_matrix, 
+  method = "color", 
+  type = "lower", 
+  addCoef.col = "black", 
+  tl.col = "black", 
+  diag = FALSE,
+  title = "Matriz de Correlaciones - Datos Salariales",
+  mar = c(0, 0, 2, 0)
+)
+```
+> **Diagnóstico Exploratorio:** La matriz revela que `lwage` se correlaciona positivamente con la educación ($r = 0,431$) y la antigüedad ($r = 0,326$). Por su parte, las correlaciones entre regresores son bajas a moderadas (destacando $r = 0,499$ entre `exper` y `tenure`, lo cual es natural dado que la antigüedad en la firma forma parte de la trayectoria laboral total, y $r = -0,300$ entre `educ` y `exper`), descartando colinealidad severa ($\vert{}r\vert{} > 0,80$).
+
+
+### Estimación de la Regresión Lineal Múltiple (MCO)
+
+Una vez validada la integridad de los datos, procedemos a estimar los parámetros poblacionales mediante la función `lm()`. Al almacenar el objeto `summary(modelo)`, R calcula internamente la matriz de varianzas-covarianzas de los estimadores, los errores estándar $ee(\hat{\beta}_j)$, los estadísticos $t$ individuales, la bondad de ajuste ($R^2$ y $R^2$ ajustado) y el estadístico $F$ de significancia conjunta.
+
+```{r}
+# Ajuste del modelo MCO
+modelo <- lm(lwage ~ educ + exper + tenure, data = datos_modelo)
+resumen <- summary(modelo)
+resumen
+```
+
+**Ecuación del Modelo Estimada:**
+A partir de la columna `Estimate`, el modelo empírico resultante es:
+
+$$\widehat{\ln(\text{wage})} = 0.284 + 0.092\,\text{educ} + 0.0041\,\text{exper} + 0.022\,\text{tenure}$$
+
+* **Educación (`educ` = $0.0920$):** *Ceteris paribus* (manteniendo constantes la experiencia general y la antigüedad en la empresa), cada año adicional de educación formal incrementa el salario por hora en un **$9.20\%$** en promedio.
+* **Experiencia (`exper` = $0.0041$):** A igual escolaridad y antigüedad en la firma actual, cada año adicional de experiencia previa en el mercado laboral asocia un incremento salarial promedio del **$0.41\%$**.
+* **Antigüedad (`tenure` = $0.0221$):** Controlando por educación y experiencia total, cada año de permanencia en la empresa actual genera un premio salarial del **$2.21\%$**, reflejando el alto valor que las organizaciones asignan al aprendizaje interno y la retención de talento.
+* **Bondad de Ajuste ($R^2 = 0.316$):** Las tres variables de capital humano logran explicar en conjunto el **$31.6\%$** de la variabilidad total del logaritmo salarial en la muestra.
+
+### Evaluación de Significancia Global e Individual
+
+En lugar de realizar una inspección visual pasiva de los asteriscos de la consola, automatizamos el protocolo de decisión estadística extrayendo el vector `fstatistic` para la prueba global y utilizando la función `tidy()` del paquete `broom` para estructurar las pruebas $t$ individuales en un marco de datos auditable:
+
+```{r}
+# A. SIGNIFICANCIA GLOBAL (TEST F)
+f_stat <- resumen$fstatistic[1]
+gl_num <- resumen$fstatistic[2]
+gl_den <- resumen$fstatistic[3]
+p_val_f <- pf(f_stat, gl_num, gl_den, lower.tail = FALSE)
+
+cat("Estadístico F:", round(f_stat, 2), "con gl (", gl_num, ",", gl_den, ")\n")
+cat("Valor p:", format.pval(p_val_f, eps = 0.001), "\n")
+cat("Conclusión F:", if_else(p_val_f < 0.05, 
+    "Rechazo H0. El conjunto de variables explica el salario.", 
+    "No se rechaza H0."), "\n")
+
+# B. SIGNIFICANCIA INDIVIDUAL (TEST t) VECTORIZADA
+tabla_t <- tidy(modelo) %>%
+  mutate(
+    p_val_fmt = format.pval(p.value, eps = 0.001, digits = 4),
+    Significancia_5pct = if_else(p.value < 0.05, "Significativo (Rechaza H0)", "No Significativo")
+  )
+
+tabla_t
+```
+
+**Análisis del Contraste de Hipótesis:**
+
+1. **Validación Conjunta (Prueba $F$):** El estadístico $F_{(3, \, 522)} = 80.39$ supera holgadamente el umbral crítico teórico ($F_{crit} \approx 2.62$), arrojando un $\text{p-valor} < 0.001$. 
+
+> Se rechaza $H_0: \beta_1 = \beta_2 = \beta_3 = 0$, confirmando que el modelo salarial es globalmente válido.
+
+2. **Validación Marginal (Pruebas $t$):** Al evaluar la columna `statistic` ($t_{calc}$), observamos que tanto `educ` ($t = 12.55$, $p < 0.001$), como `tenure` ($t = 7.13$, $p < 0.001$) y `exper` ($t = 2.39$, $p = 0.0172$) superan en valor absoluto el umbral crítico bilateral ($t_{crit} \approx 1.964$). 
+
+> Aunque el efecto porcentual de la experiencia general es modesto ($0.41\%$), su estimación cuenta con suficiente precisión muestral para rechazar $H_0: \beta_j = 0$ al $5\%$ de significancia.
+
+
+### Intervalos de Confianza y Visualización
+
+Como destacan Gujarati y Porter (2010), la prueba de hipótesis bilateral y el intervalo de confianza al $(1 - \alpha)\%$ constituyen dos caras de la misma moneda inferencial: 
+
+$$\text{IC}_{95\%}(\beta_j) = \hat{\beta}_j \pm t_{1-\alpha/2, \, n-k-1} \cdot ee(\hat{\beta}_j)$$
+
+Si el intervalo de confianza al $95\%$ para un parámetro **no contiene el valor cero**, entonces necesariamente se rechaza $H_0: \beta_j = 0$ al nivel $\alpha = 0.05$. A continuación, extraemos los límites inferiores (`conf.low`) y superiores (`conf.high`) mediante `tidy(modelo, conf.int = TRUE)` y construimos un gráfico de bosque (*Forest Plot*), excluyendo el intercepto para evitar distorsionar la escala visual de las pendientes:
+
+```{r}
+# Intervalos de Confianza formales
+ic_coef <- tidy(modelo, conf.int = TRUE, conf.level = 0.95)
+ic_coef
+
+# Gráfico Forest Plot de Intervalos de Confianza (excluyendo el intercepto)
+ggplot(ic_coef %>% filter(term != "(Intercept)"), aes(x = estimate, y = term)) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "firebrick", linewidth = 0.9) +
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high), height = 0.25, color = "steelblue", linewidth = 1.1) +
+  geom_point(size = 3.5, color = "darkblue") +
+  theme_minimal(base_size = 12) +
+  labs(
+    title = "Intervalos de Confianza al 95% para los Efectos Marginales",
+    subtitle = "Modelo Semilogarítmico: lwage ~ educ + exper + tenure",
+    x = "Efecto estimado (aproximación semilogarítmica %)",
+    y = "Variables explicativas",
+    caption = "Línea roja: H0 (beta = 0). Las bandas no cortan el cero."
+  )
+```
+**Interpretación**
+
+El gráfico `forest plot` sintetiza la precisión y significancia de los efectos marginales estimados sobre el salario, contrastándolos directamente con la hipótesis nula de no efecto ($H_0: \beta_j = 0$), representada por la línea vertical segmentada en cero. 
+
+> El punto central indica la estimación puntual de MCO para cada coeficiente, mientras que las barras horizontales delimitan sus intervalos de confianza al 95%. 
+
+Desde la perspectiva inferencial, se observa con claridad que **ninguna de las barras cruza el umbral del cero y todas se sitúan en el terreno positivo, lo que permite rechazar $H_0$ al 5% de significancia** y concluir que la educación, la experiencia y la antigüedad en la empresa ejercen impactos estadísticamente significativos sobre las remuneraciones. 
+
+En términos de gestión y economía aplicada, la variable `educ` destaca no solo por exhibir la mayor magnitud en el retorno salarial (un incremento aproximado de $9.2\%$ por año adicional de escolaridad formal, *ceteris paribus*), sino también por presentar una banda acotada (entre $7.76\%$ y $10.65\%$), lo que refleja un efecto sustantivo y medido con alta precisión para la toma de decisiones en políticas de compensaciones.
+
+
+## Banda de Confianza vs. Predicción
+
+Un error habitual en la analítica de gestión es confundir el intervalo de confianza de la media esperada con el intervalo de predicción para una observación individual. Siguiendo a Wooldridge (2015), ambos comparten la misma predicción puntual ($\hat{Y}_0$), pero difieren en la estructura de su varianza del error de pronóstico:
+
+> **Intervalo de Confianza (`interval = "confidence"`):** Acota la altura promedio esperada de toda la subpoblación que comparte un perfil determinado ($\mathbb{E}[Y \mid X_0]$). Solo incorpora la incertidumbre derivada de la estimación de los parámetros ($\widehat{\text{Var}}(\hat{\beta}_j)$). Es más estrecho en el centro de gravedad muestral ($\bar{X}$) y se ensancha hacia los extremos.   
+
+> **Intervalo de Predicción (`interval = "prediction"`):** Acota el rango salarial donde puede ubicarse un trabajador individual concreto ($Y_0 = \mathbb{E}[Y \mid X_0] + u_0$). Dado que el desempeño de una persona específica está sujeto a factores inobservables, la varianza de esta predicción debe sumar la **varianza residual irreducible ($\hat{\sigma}^2$)** del término de error, generando una banda considerablemente más ancha.
+
+**Mecánica del Proceso en R (Simulación *Ceteris Paribus*):**
+
+Como nuestro modelo posee tres regresores (un hiperplano en cuatro dimensiones), para proyectar visualmente el efecto puro de la educación (`educ`) en un plano bidimensional debemos aplicar matemáticamente la condición *ceteris paribus*. Para ello:
+
+1. Construimos un dataframe sintético (`grilla_ceteris`) donde `educ` varía de forma continua desde su mínimo hasta su máximo muestral ($0$ a $18$ años), mientras que `exper` y `tenure` se fijan estrictamente constantes en sus promedios muestrales ($\overline{\text{exper}} = 17.0$ y $\overline{\text{tenure}} = 5.1$ años).
+
+2. Ejecutamos la función `predict()` dos veces sobre esta grilla: primero solicitando la incertidumbre de la media poblacional (`"confidence"`) y luego la dispersión individual (`"prediction"`), superponiendo ambas capas mediante `geom_ribbon()` en `ggplot2`.
+
+```{r}
+# Crear grilla ceteris paribus para educ con exper y tenure en sus promedios
+grilla_ceteris <- data.frame(
+  educ = seq(min(wage1$educ), max(wage1$educ), length.out = 100),
+  exper = mean(wage1$exper),
+  tenure = mean(wage1$tenure)
+)
+
+# Predicciones de confianza (Media poblacional)
+pred_conf <- predict(modelo, newdata = grilla_ceteris, interval = "confidence", level = 0.95)
+grilla_ceteris$fit <- pred_conf[, "fit"]
+grilla_ceteris$ic_low <- pred_conf[, "lwr"]
+grilla_ceteris$ic_upr <- pred_conf[, "upr"]
+
+# Predicciones individuales
+pred_indiv <- predict(modelo, newdata = grilla_ceteris, interval = "prediction", level = 0.95)
+grilla_ceteris$ip_low <- pred_indiv[, "lwr"]
+grilla_ceteris$ip_upr <- pred_indiv[, "upr"]
+
+# Gráfico de proyección
+ggplot(wage1, aes(x = educ, y = lwage)) +
+  geom_jitter(alpha = 0.25, width = 0.2, color = "gray30") +
+  geom_ribbon(data = grilla_ceteris, aes(y = fit, ymin = ip_low, ymax = ip_upr, fill = "Int. Predicción Individual (95%)"), alpha = 0.2) +
+  geom_ribbon(data = grilla_ceteris, aes(y = fit, ymin = ic_low, ymax = ic_upr, fill = "Int. Confianza de la Media (95%)"), alpha = 0.45) +
+  geom_line(data = grilla_ceteris, aes(y = fit, color = "Recta Estimada Ceteris Paribus"), linewidth = 1.1) +
+  scale_fill_manual(name = "Bandas", values = c("Int. Predicción Individual (95%)" = "darkorange", "Int. Confianza de la Media (95%)" = "steelblue")) +
+  scale_color_manual(name = "Ajuste", values = c("Recta Estimada Ceteris Paribus" = "navy")) +
+  theme_minimal(base_size = 12) +
+  labs(
+    title = "Proyección Ceteris Paribus: Retorno a la Educación",
+    subtitle = paste0("Fijando Experiencia = ", round(mean(wage1$exper), 1), " años y Antigüedad = ", round(mean(wage1$tenure), 1), " años"),
+    x = "Años de escolaridad (educ)",
+    y = "Logaritmo del salario (lwage)",
+    caption = "Base: wage1 (Wooldridge)."
+  ) +
+  theme(legend.position = "bottom")
+```
+
+Este gráfico ilustra la proyección del retorno salarial ante variaciones en la escolaridad aislando el efecto de las demás variables, y visualiza la diferencia práctica entre estimar un promedio poblacional frente a predecir el caso de un individuo particular.   
+
+**Elementos y Construcción del Gráfico**
+
+* **Condición *ceteris paribus* (Recta azul central):** Representa la trayectoria estimada de la función de regresión cuando los años de experiencia (`exper`) y la permanencia en la empresa (`tenure`) se mantienen constantes en sus promedios muestrales ($17.0$ y $5.1$ años, respectivamente). Su pendiente positiva refleja el retorno marginal de la educación sobre el logaritmo del salario.
+
+* **Dispersión muestral (Puntos grises con *jitter*):** Son las observaciones reales del conjunto de datos `wage1`, que evidencian la variabilidad natural existente en el mercado laboral entre trabajadores con iguales o distintos años de escolaridad.   
+
+* **Banda azul estrecha (Intervalo de Confianza al 95%):** Mide la incertidumbre sobre la media condicional $\mathbb{E}[Y \mid X]$. Refleja el rango donde se ubicaría el salario promedio esperado de toda la población de trabajadores que comparten ese nivel de educación y los valores promedio fijados de experiencia y antigüedad. Su ancho es mínimo cerca del promedio muestral de educación ($\overline{\text{educ}} \approx 12.56$ años) y se ensancha gradualmente hacia los extremos donde existe menor densidad de datos.   
+
+* **Banda naranja amplia (Intervalo de Predicción al 95%):** Acota el rango salarial esperado para un trabajador individual concreto. Es considerablemente más ancha porque no solo incorpora el error de estimación de los coeficientes, sino también el término de perturbación estocástica individual $u_i$ (habilidades innatas no observadas, calidad de la institución educativa, capacidad de negociación o contingencias propias del sector industrial).
+
+
+## Interpretación Económica y Aplicación a la Gestión
+
+**Retorno marginal significativo:** La inclinación ascendente sostenida confirma que, controlando por la trayectoria general y la antigüedad en la empresa, mayores niveles de escolaridad formal se traducen sistemáticamente en mayores niveles de remuneración real en el mercado.   
+
+* **Planificación corporativa y presupuestaria (Banda Azul):** Para el diseño de escalas salariales, bandas de compensación o proyecciones agregadas del gasto de nómina por departamento, la dirección de Recursos Humanos o Control de Gestión debe guiarse por el **intervalo de confianza de la media**, ya que los errores individuales ($u_i$) tienden a compensarse en el agregado, importando únicamente el costo esperado promedio por nivel de cualificación.   
+
+* **Negociación y selección individual (Banda Naranja):** Para procesos de reclutamiento, evaluación de ofertas o negociación contractual con un candidato específico, el tomador de decisiones debe observar el **intervalo de predicción individual**, el cual advierte con realismo estadístico sobre la amplitud de ingresos que puede percibir un profesional particular en función de sus competencias no observables en el currículum formal.
+
+
+---
+
+## Conclusiones
+
+El recorrido teórico y aplicado desarrollado en este documento permite establecer que la econometría para la gestión trasciende el mero ajuste algebraico de una recta por Mínimos Cuadrados Ordinarios (MCO). La verdadera potencia analítica radica en la **inferencia estadística**, la cual dota a las organizaciones de un protocolo auditable para separar patrones estructurales de fluctuaciones aleatorias en los datos.
+
+A partir de los contrastes y simulaciones ejecutadas, se desprenden cuatro aprendizajes fundamentales para la toma de decisiones basada en evidencia:
+
+1. **Jerarquía de Validación del Modelo (Prueba $F$ vs. Prueba $t$):** 
+   Ninguna interpretación sobre coeficientes particulares es válida si antes no se ha verificado la **significancia global** del modelo mediante el estadístico $F$ de Fisher-Snedecor. Mientras que la prueba $F$ actúa como un filtro general que certifica que el conjunto de variables explicativas supera el pronóstico ingenuo de la media muestral ($\bar{Y}$), la prueba $t$ de Student permite aislar el impacto marginal (*ceteris paribus*) de cada regresor, identificando cuáles palancas de gestión justifican realmente la asignación de recursos.
+
+2. **Significancia Estadística vs. Relevancia Económica:** 
+   Como advierte Wooldridge (2015), rechazar la hipótesis nula ($H_0: \beta_j = 0$) gracias a un *p-value* menor a $0.05$ confirma que el efecto existe, pero no garantiza que sea estratégicamente relevante. En el modelo salarial analizado (`wage1`), tanto la experiencia previa (`exper`) como la educación (`educ`) resultaron estadísticamente significativas al $95\%$ de confianza; sin embargo, la inspección de sus magnitudes e intervalos de confianza reveló que el retorno anual de la escolaridad ($9.20\%$) y de la antigüedad en la firma ($2.21\%$) superan ampliamente al de la experiencia genérica ($0.41\%$). El análisis gerencial exige ponderar siempre la precisión estadística junto con la magnitud económica del estimador.
+
+3. **El Rol Diagnóstico de la Exploración Previa:** 
+   La confiabilidad de las pruebas de hipótesis depende directamente de la precisión de los errores estándar $ee(\hat{\beta}_j)$. La revisión de la matriz de correlaciones antes de estimar el modelo no es un paso meramente descriptivo, sino una medida preventiva esencial frente a la multicolinealidad: cuando dos regresores están altamente correlacionados, la señal individual se diluye, inflando la varianza de los estimadores y pudiendo conducir a la paradoja de obtener un modelo globalmente significativo ($F$ alto) pero con regresores individuales aparentemente no significativos ($t$ bajos) (Gujarati y Porter, 2010).
+
+4. **Gestión de la Incertidumbre en la Proyección:** 
+   Finalmente, la distinción entre el **intervalo de confianza de la media** y el **intervalo de predicción individual** resulta crítica para evitar errores de planificación. Mientras que las decisiones agregadas o presupuestarias (como estimar el costo salarial promedio de un departamento) operan bajo la estrecha incertidumbre de la esperanza condicional $\mathbb{E}[Y \mid X]$, las decisiones sobre casos individuales deben incorporar la varianza residual irreducible ($\hat{\sigma}^2$), reconociendo con realismo estadístico el peso de los factores no observados ($u_i$) en el comportamiento humano y empresarial.
+
+---
+
+## Referencias Bibliográficas
+
+* Gujarati, D. N., y Porter, D. C. (2010). *Econometría* (5.ª ed.). McGraw-Hill.
+* Robinson, D., Hayes, A., y Couch, S. (2024). *broom: Convert statistical objects into tidy tibbles* [Paquete de R]. CRAN. https://CRAN.R-project.org/package=broom
+* Shea, J. M. (2024). *wooldridge: 115 Data Sets from "Introductory Econometrics: A Modern Approach" by Jeffrey M. Wooldridge* [Paquete de R]. CRAN. https://CRAN.R-project.org/package=wooldridge
+* Wei, T., y Simko, V. (2021). *R package 'corrplot': Visualization of a Correlation Matrix* [Paquete de R]. CRAN. https://github.com/taiyun/corrplot
+* Wickham, H. (2016). *ggplot2: Elegant graphics for data analysis* (2.ª ed.). Springer-Verlag. https://ggplot2.tidyverse.org
+* Wooldridge, J. M. (2015). *Introducción a la econometría: Un enfoque moderno* (5.ª ed.). Cengage Learning.
