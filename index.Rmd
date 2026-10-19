@@ -31,5 +31,10 @@ Selecciona el formato que deseas consultar para cada unidad:
 
 ---
 
+### 4. Modelo de Regresión Lineal Múltiple e Inferencia
+* 📥 [Descargar script .Rmd](04_RLM e inferencia_2.Rmd) *(Código fuente reproducible)*
+
+---
+
 ### 📂 Recursos adicionales
 - 🔗 **[Repositorio completo en GitHub](https://github.com/jpcl-cl/Econometria)**
