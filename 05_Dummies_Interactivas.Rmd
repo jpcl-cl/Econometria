@@ -1,0 +1,396 @@
+---
+title: 'Apunte 5: Variables dummies e interactivas'
+subtitle: "Econometría para la gestión · Ingeniería Comercial"
+author: "Prof. Juan Pablo Carrasco"
+date: "`r format(Sys.time(), '%d de %B de %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: tango
+    code_folding: show
+    df_print: paged
+    self_contained: true
+---
+<style>
+body {
+  text-align: justify;
+}
+</style>
+
+## Introducción
+
+En el análisis de decisiones empresariales y económicas, locales y globales, los factores cuantitativos como la escolaridad, los años de experiencia o la inversión en capital físico rara vez operan en el vacío. 
+
+En la práctica gerencial, gran parte de la información relevante se presenta en forma cualitativa: el género de los colaboradores, su estado civil, la pertenencia a un sindicato, la ubicación geográfica de una planta productiva o el tipo de contrato laboral.
+
+**¿Cómo incorporar atributos cualitativos en un modelo de regresión lineal múltiple (RLM)?**
+
+La econometría resuelve este desafío mediante el uso de **variables dicotómicas, binarias o "dummy"**, las cuales transforman categorías cualitativas en indicadores numéricos de $0$ y $1$. 
+
+Asimismo, cuando el impacto de una palanca de gestión no es constante, sino que depende de las características del individuo (por ejemplo, si el retorno a la educación difiere según el género), recurrimos a las **variables interactivas**.
+
+El objetivo de este apunte es revisar la teoría, interpretación y estimación empírica de las variables dummy y de interacción basándonos en los fundamentos de Gujarati y Porter (2010) y Wooldridge (2015), utilizando la bases de datos  `wage1`.
+
+---
+
+## Variables Dummy o Categóricas
+
+Una variable dummy (o indicador) es aquella que toma únicamente los valores de **$1$** o **$0$** para indicar la presencia o ausencia de un atributo o cualidad particular:
+
+$$D_i = \begin{cases} 
+1 & \text{si el individuo posee el atributo (ej. es mujer, sindicalizado, casado)} \\ 
+0 & \text{en caso contrario (categoría de referencia o base)} 
+\end{cases}$$
+
+### El Coeficiente Diferencial del Intercepto
+
+Para comprender cómo operan las variables dummy en un modelo de regresión, consideremos una especificación salarial sencilla donde el logaritmo del salario ($\ln(\text{wage})$) se explica por los años de educación formal y una variable dummy de género ($female_i$):
+
+$$\ln(\text{wage})_i = \beta_0 + \delta_0 \text{female}_i + \beta_1 \text{educ}_i + u_i$$
+
+* **Categoría de referencia (Hombres, $\text{female}_i = 0$):**
+  $$\mathbb{E}[\ln(\text{wage}) \mid \text{educ}, \text{female} = 0] = \beta_0 + \beta_1 \text{educ}_i$$
+
+* **Categoría de interés (Mujeres, $\text{female}_i = 1$):**
+  $$\mathbb{E}[\ln(\text{wage}) \mid \text{educ}, \text{female} = 1] = (\beta_0 + \delta_0) + \beta_1 \text{educ}_i$$
+
+> **Interpretación de $\delta_0$:** 
+El parámetro $\delta_0$ mide el **cambio en el intercepto** (efecto nivel) para el grupo que toma el valor de $1$ en relación con la categoría de referencia ($\text{female} = 0$). Asumiendo que la pendiente $\beta_1$ es idéntica para ambos grupos, la inclusión de $\delta_0$ permite desplazar la función de regresión paralelamente hacia arriba o hacia abajo.
+
+Si $\delta_0$ es negativo y estadísticamente significativo, indica que, a igual nivel de educación, existe una brecha salarial promedio entre géneros en la muestra analizada.
+
+---
+
+### Visualización Desplazamiento del Intercepto
+
+Para ilustrar de forma intuitiva el efecto de una variable dummy sobre el intercepto, simularemos un escenario donde dos grupos comparten la misma pendiente de retorno a la educación pero poseen interceptos diferenciales.
+
+```{r dummy-intercepto-teorico, fig.width=8.5, fig.height=4.8, message=FALSE, warning=FALSE}
+library(ggplot2)
+
+# ==============================================================================
+# 1. PARÁMETROS DEL ESCENARIO TEÓRICO
+# ==============================================================================
+beta_0   <- 1.20   # Intercepto base (Categoría de referencia: Hombres)
+delta_0  <- -0.25  # Coeficiente diferencial de la dummy (Mujeres: -0.25)
+beta_1   <- 0.09   # Pendiente común (Retorno a la educación)
+
+# ==============================================================================
+# 2. CREACIÓN DE GRILLAS PARA AMBAS LÍNEAS PARALELAS
+# ==============================================================================
+educ_seq <- seq(8, 18, length.out = 100)
+df_ref   <- data.frame(educ = educ_seq, lwage = beta_0 + beta_1 * educ_seq, Grupo = "Referencia (Hombres: D = 0)")
+df_dum   <- data.frame(educ = educ_seq, lwage = (beta_0 + delta_0) + beta_1 * educ_seq, Grupo = "Dummy Activa (Mujeres: D = 1)")
+df_plot  <- rbind(df_ref, df_dum)
+
+# ==============================================================================
+# 3. VISUALIZACIÓN GRÁFICA DEL COEFICIENTE DIFERENCIAL
+# ==============================================================================
+ggplot(df_plot, aes(x = educ, y = lwage, color = Grupo, linetype = Grupo)) +
+  geom_line(linewidth = 1.2) +
+  geom_segment(aes(x = 12, y = beta_0 + beta_1 * 12, xend = 12, yend = (beta_0 + delta_0) + beta_1 * 12),
+               color = "#b91c1c", linetype = "solid", linewidth = 1.3, arrow = arrow(length = unit(0.2, "cm"), ends = "both")) +
+  annotate("label", x = 12.4, y = beta_0 + beta_1 * 12 + (delta_0 / 2),
+           label = paste0("Efecto Diferencial\nδ0 = ", delta_0, " (~", round(100 * (exp(delta_0) - 1), 1), "%)"),
+           color = "#b91c1c", fill = "#fef2f2", fontface = "bold", size = 3.3) +
+  scale_color_manual(values = c("Referencia (Hombres: D = 0)" = "#1d4ed8", "Dummy Activa (Mujeres: D = 1)" = "#0f172a")) +
+  scale_linetype_manual(values = c("Referencia (Hombres: D = 0)" = "solid", "Dummy Activa (Mujeres: D = 1)" = "dashed")) +
+  labs(
+    title = "Efecto de una Variable Dummy: Desplazamiento Paralelo del Intercepto",
+    subtitle = "Modelo con intercepto diferencial (δ0 < 0) y pendientes homogéneas (β1)",
+    x = "Años de Educación (educ)",
+    y = "Logaritmo del Salario Esperado E[lwage | educ, D]",
+    caption = "Fuente: Elaboración propia en R basada en los fundamentos de Gujarati y Porter (2010) y Wooldridge (2015)."
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13, color = "#0f172a"),
+    plot.subtitle = element_text(size = 10.5, color = "#334155", margin = margin(b = 10)),
+    plot.caption = element_text(size = 8.5, color = "#64748b", hjust = 0, margin = margin(t = 10)),
+    axis.title = element_text(face = "bold", color = "#1e293b"),
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+```
+
+> **Lectura del Gráfico:** Las dos rectas son perfectamente paralelas, lo que refleja que el rendimiento marginal de un año adicional de educación ($\beta_1$) es idéntico para ambos grupos. La distancia vertical constante entre ambas líneas corresponde exactamente al coeficiente diferencial $\delta_0$, el cual desplaza el intercepto hacia abajo para el grupo caracterizado por $\text{D} = 1$.
+
+### Trampa de las Variables Dummy (Colinealidad Perfecta)
+
+Si una variable cualitativa posee $m$ categorías mutuamente excluyentes (por ejemplo, estado civil: soltero, casado, divorciado), **NUNCA** se deben incluir $m$ variables dummy independientes junto con el intercepto en el modelo. 
+
+Si se incluyeran todas, la suma de las $m$ dummies en cada observación equivaldría exactamente al vector del intercepto ($\sum D_{ji} = 1$), generando una **colinealidad perfecta** (matriz de diseño no invertible, impidiendo el cálculo de MCO). 
+
+
+**¿Por qué se produce la Trampa de las Variables Dummy?**
+
+Supongamos que deseamos modelar los salarios en función de la educación y el estado civil, el cual cuenta con $m = 3$ categorías mutuamente excluyentes: 
+
+* Casado ($D_{1i}$), 
+* Soltero ($D_{2i}$) y, 
+* Otro / Divorciado ($D_{3i}$).
+
+Si por un error de especificación intentáramos incluir las tres dummies junto con el intercepto global ($\beta_0$), la ecuación estimada sería:
+$$Y_i = \beta_0 + \beta_1 \text{educ}_i + \delta_1 D_{1i} + \delta_2 D_{2i} + \delta_3 D_{3i} + u_i$$
+Dado que todo individuo pertenece necesariamente a **una y solo una** de estas categorías, se cumple de manera exacta e invariable en cada observación de la muestra que la suma de todas las dummies es igual a uno:
+
+$$D_{1i} + D_{2i} + D_{3i} = 1 \quad (\text{para todo } i)$$
+Esto significa que el vector del intercepto (compuesto por unos) es una combinación lineal exacta de las columnas de las variables dummy. 
+
+> En la práctica de R, esto se manifiesta cuando la función lm() elimina automáticamente uno de los coeficientes reportándolo como NA (Not Available).
+
+
+> **Regla:** Para $m$ categorías, se deben incluir estrictamente **$m - 1$ variables dummy**. La categoría omitida se convierte automáticamente en la **línea de base o grupo de referencia**.
+
+---
+
+## Variables Interactivas o moderadoras
+
+Hasta ahora, en los modelos de regresión lineal múltiple con variables dummy hemos supuesto que la presencia de un atributo cualitativo genera exclusivamente un desplazamiento paralelo en la función de regresión (modificando el intercepto $\beta_0$), mientras que el efecto marginal de las variables continuas, como la educación o la experiencia, permanece estricto y uniformemente constante para todos los individuos de la población ($\beta_1$).
+
+Sin embargo, en la realidad empresarial, socioeconómica y organizacional, esta restricción rara vez se sostiene. En el proceso investigativo surgen preguntas relevantes como *¿Es el retorno salarial de la educación idéntico para hombres y mujeres, o el mercado premia de manera diferente la escolaridad según el género?* *¿Depende el impacto de la antigüedad en la empresa de los niveles previos de capacitación técnica?*.
+
+Para capturar estas dinámicas donde el efecto de una variable depende del valor que toma otra, la econometría recurre al uso de **variables interactivas** (*o términos de interacción*). Estas se construyen multiplicando matemáticamente una variable continua por una variable dummy (interacción continua-dummy) o combinando dos variables continuas (interacción continua-continua).
+
+### Interacción entre Variable Continua y Dummy (Pendientes Diferenciales)
+
+Cuando introducimos un término de interacción entre una variable continua (ej. años de educación, $\text{educ}$) y una variable dummy dicotómica (ej. género, $\text{female}$), permitimos que la línea de regresión no solo se desplace en su nivel base, sino que gire, es decir, que posea pendientes distintas para cada grupo.
+
+Consideremos el siguiente modelo econométrico ampliado:
+$$\ln(\text{wage})_i = \beta_0 + \delta_0 \text{female}_i + \beta_1 \text{educ}_i + \delta_1 (\text{educ}_i \times \text{female}_i) + u_i$$
+
+Para comprender con total claridad cómo opera este modelo, evaluemos su esperanza condicional desagregando los dos escenarios posibles según el valor de la dummy $\text{female}_i$:
+
+Para el **Grupo de Referencia o Base** (Hombres, $\text{female}_i = 0$):
+Al sustituir $\text{female} = 0$ en la ecuación general, el término del intercepto diferencial y el término interactivo se anulan:
+$$\mathbb{E}[\ln(\text{wage}) \mid \text{educ}, \text{female} = 0] = \beta_0 + \beta_1 \text{educ}_i$$
+* **Intercepto base:** $\beta_0$ (representa el logaritmo salarial esperado para un hombre con cero años de educación formal).
+
+* **Pendiente o retorno marginal de la educación:** $\beta_1$ (mide el cambio porcentual en el salario por cada año adicional de educación en el segmento masculino).
+  
+Para el **Grupo con Atributo Activo** (Mujeres, $\text{female}_i = 1$):
+Al sustituir $\text{female} = 1$, agrupamos los componentes que no dependen de la educación (nuevo intercepto) y factorizamos aquellos que multiplican a $\text{educ}_i$ (nueva pendiente):
+$$\mathbb{E}[\ln(\text{wage}) \mid \text{educ}, \text{female} = 1] = (\beta_0 + \delta_0) + (\beta_1 + \delta_1) \text{educ}_i$$
+* **Intercepto ajustado** (*o nivel base para mujeres*): $(\beta_0 + \delta_0)$.
+
+* **Pendiente ajustada** (*retorno marginal para mujeres*): $(\beta_1 + \delta_1)$.
+
+  
+**Interpretación de los Coeficientes**
+
+**$\delta_0$** (*Diferencial de Intercepto*): Mide la brecha salarial fija o estructural entre ambos grupos cuando la variable continua toma un valor de cero ($\text{educ} = 0$). Aunque en la práctica los años de educación raramente son cero, $\delta_0$ actúa como el parámetro de desplazamiento vertical que ajusta el nivel base de la recta.
+
+**$\delta_1$** (*Coeficiente Diferencial de la Pendiente*): Es el núcleo de la interacción. ***Mide cuánto cambia (incrementa o reduce) el retorno marginal de la educación para las mujeres en comparación directa con los hombres***. Si $\delta_1 > \text{0}$, la pendiente del grupo femenino es más empinada, lo que indica que el mercado laboral otorga un retorno porcentual a la escolaridad superior en las mujeres. Si $\delta_1 < \text{0}$, el retorno es inferior.
+
+**El Efecto Marginal Condicionando**
+
+Desde una perspectiva matemática, el efecto marginal de la educación sobre el logaritmo del salario ya no es una constante global $\beta_1$, sino una función derivada que depende del estado de la variable dummy:
+
+$$\frac{\partial \mathbb{E}[\ln(\text{wage})]}{\partial \text{educ}} = \beta_1 + \delta_1 \text{female}$$
+Cuando $\text{female} = 0$ (Hombres), el efecto marginal es exactamente $\beta_1$.
+Cuando $\text{female} = 1$ (Mujeres), el efecto marginal pasa a ser $(\beta_1 + \delta_1)$.
+
+Esta formulación demuestra que la variable dummy $\text{female}$ actúa como una variable moderadora del impacto de la educación sobre las remuneraciones.
+
+### Visualización de la Interacción (Pendientes Diferentes)
+
+Ilustremos gráficamente este fenómeno econométrico mediante una simulación en R, donde observamos cómo la inclusión de un término interactivo genera líneas de regresión no paralelas, reflejando divergencia o convergencia en los retornos según el grupo analizado
+
+```{r}
+library(ggplot2)
+
+# ==============================================================================
+# 1. PARÁMETROS DEL ESCENARIO DE INTERACCIÓN
+# ==============================================================================
+beta_0   <- 1.00   # Intercepto base (Hombres)
+delta_0  <- 0.40   # Diferencial de intercepto
+beta_1   <- 0.07   # Pendiente base (Retorno a la educación en Hombres: 7%)
+delta_1  <- 0.04   # Diferencial de pendiente (Mujeres: exceso de retorno = +4%, total = 11%)
+
+# ==============================================================================
+# 2. CREACIÓN DE GRILLAS PARA LÍNEAS NO PARALELAS (DIVERGENCIA ESTRUCTURAL)
+# ==============================================================================
+educ_seq <- seq(8, 18, length.out = 100)
+df_ref_i <- data.frame(educ = educ_seq, lwage = beta_0 + beta_1 * educ_seq, Grupo = "Referencia (Hombres: Pendiente β1)")
+df_dum_i <- data.frame(educ = educ_seq, lwage = (beta_0 + delta_0) + (beta_1 + delta_1) * educ_seq, Grupo = "Grupo con Interacción (Mujeres: β1 + δ1)")
+df_plot_i <- rbind(df_ref_i, df_dum_i)
+
+# ==============================================================================
+# 3. VISUALIZACIÓN GRÁFICA DEL TÉRMINO INTERACTIVO
+# ==============================================================================
+ggplot(df_plot_i, aes(x = educ, y = lwage, color = Grupo, linetype = Grupo)) +
+  geom_line(linewidth = 1.2) +
+  scale_color_manual(values = c("Referencia (Hombres: Pendiente β1)" = "#2563eb", 
+                                "Grupo con Interacción (Mujeres: β1 + δ1)" = "#d97706")) +
+  scale_linetype_manual(values = c("Referencia (Hombres: Pendiente β1)" = "solid", 
+                                   "Grupo con Interacción (Mujeres: β1 + δ1)" = "solid")) +
+  labs(
+    title = "Efecto de una Variable Interactiva: Intercepto y Pendientes Diferenciales",
+    subtitle = "Modelo con δ0 (cambio de nivel base) y δ1 (moderación del retorno marginal a la educación)",
+    x = "Años de Educación (educ)",
+    y = "Logaritmo del Salario Esperado E[lwage | educ, D]",
+    caption = "Fuente: Elaboración propia en R basada en los fundamentos de Gujarati y Porter (2010) y Wooldridge (2015)."
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13, color = "#0f172a"),
+    plot.subtitle = element_text(size = 10.5, color = "#334155", margin = margin(b = 10)),
+    plot.caption = element_text(size = 8.5, color = "#64748b", hjust = 0, margin = margin(t = 10)),
+    axis.title = element_text(face = "bold", color = "#1e293b"),
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+```
+
+>**Lectura del Gráfico**
+A diferencia de los modelos con dummies puramente aditivas (*donde las rectas de regresión se mantienen estrictamente paralelas*), la incorporación del término de interacción ($educ \times female$) quiebra el paralelismo. 
+Las pendientes de las rectas son claramente distintas ($\beta_1$ frente a $\beta_1 + \delta_1$). 
+
+>Visualmente se observa cómo las brechas salariales varían en función del nivel educativo: **el impacto de capacitarse o alcanzar mayores grados académicos no se distribuye de manera homogénea**, sino que está condicionado y moderado por el segmento estructural al que pertenece el individuo, ofreciendo a la alta gerencia y a los analistas de recursos humanos una herramienta de precisión para detectar discriminaciones salariales o evaluar la efectividad diferenciada de políticas de incentivos.
+
+---
+
+## Aplicación Práctica en R con la Base `wage1`
+
+Para consolidar los conceptos teóricos revisados, desarrollaremos un flujo de trabajo econométrico completo utilizando el dataset `wage1` del paquete `wooldridge`.
+
+Analizaremos la brecha salarial de género bajo dos especificaciones progresivas:
+
+* **Modelo Aditivo (Intercepto Diferencial)**: Asumiendo que el retorno a la educación es homogéneo entre hombres y mujeres (desplazamiento paralelo).
+
+* **Modelo Interactivo (Pendientes Diferenciales)**: Evaluando si el mercado laboral premia de forma diferenciada la educación según el género.
+
+Cargamos las librerías necesarias y el conjunto de datos `wage1`, examinando la estructura de las variables clave: el logaritmo del salario por hora (`lwage`), los años de educación formal (`educ`), la experiencia (`exper`), la antigüedad (`tenure`) y la variable dummy de género (`female`, donde $1$ indica mujer y $0$ hombre).
+
+```{r}
+library(wooldridge)
+library(ggplot2)
+library(dplyr)
+library(broom)
+
+# Cargar dataset
+data("wage1")
+
+# Vista previa de las variables de estudio
+summary(wage1 %>% select(lwage, educ, exper, tenure, female))
+```
+
+### Modelo 1: Regresión con Dummy Aditiva (Intercepto Diferencial)
+
+Estimamos un modelo de regresión lineal múltiple que incorpora la variable dummy female de forma aditiva, controlando por educación, experiencia y antigüedad.
+
+$$\ln(\text{wage}) = \beta_0 + \delta_0 \text{female} + \beta_1 \text{educ} + \beta_2 \text{exper} + \beta_3 \text{tenure} + u$$
+```{r}
+# Estimación MCO del modelo aditivo
+modelo_aditivo <- lm(lwage ~ educ + exper + tenure + female, data = wage1)
+summary(modelo_aditivo)
+```
+Interpretación de los Resultados:
+
+* **Intercepto** ($\hat{\beta}_0 \approx 0.5013$): Representa el logaritmo salarial esperado para la categoría de referencia (hombres, female = 0) cuando los años de educación (educ), experiencia (exper) y antigüedad (tenure) son estrictamente cero. Este parámetro es estadísticamente significativo ($t = 4.920, p = 1.16 \times 10^{-6}$).   
+
+* **Variable Educación** (`educ`, $\hat{\beta}_1 \approx 0.0875$): Manteniendo constantes la experiencia, la antigüedad y el género (ceteris paribus), cada año adicional de educación formal incrementa el salario por hora en un $8.75\%$ en promedio. Su estadístico $t$ de $12.605$ ($p < 2 \times 10^{-16}$) confirma un impacto altamente robusto.   
+
+* **Variable Experiencia** (`exper`, $\hat{\beta}_2 \approx 0.0046$): Controlando por las demás variables del modelo, cada año adicional de experiencia general en el mercado laboral se asocia a un incremento salarial aproximado del $0.46\%$ ($t = 2.845, p = 0.00461$).   
+
+* **Variable Antigüedad** (`tenure`, $\hat{\beta}_3 \approx 0.0174$): Controlando por educación y experiencia, cada año de permanencia ininterrumpida en la empresa actual genera un premio salarial directo del $1.74\%$ ($t = 5.835, p = 9.45 \times 10^{-9}$), reflejando la alta valoración del aprendizaje organizacional y la retención de talento.   
+
+* **Variable Dummy de Género** (`female`, $\hat{\delta}_0 \approx -0.3011$): Al controlar por educación, experiencia y antigüedad, las mujeres perciben en promedio un salario menor reflejado en este coeficiente diferencial. Tratándose de un modelo semilogarítmico, el impacto porcentual exacto de pertenecer al grupo activo ($D = 1$) se calcula mediante la transformación de Halvorsen-Palmquist:
+
+$$100 \times (\exp(\hat{\delta}_0) - 1) = 100 \times (\exp(-0.301146) - 1) \approx -26.0\%$$
+Esto evidencia una brecha salarial ajustada de aproximadamente un $26.0\%$ en contra del segmento femenino en la muestra, la cual resulta altamente significativa desde el punto de vista estadístico ($t = -8.085, p = 4.37 \times 10^{-15}$).   
+
+* **Bondad de Ajuste Global** ($R^2 = 0.3923$): El coeficiente de determinación múltiple indica que el conjunto de regresores incorporados (educación, experiencia, antigüedad y género) logra explicar de manera conjunta el $39.23\%$ de la variabilidad total observada en el logaritmo del salario (lwage).  
+
+* **Significancia Conjunta** ($F = 84.07, p < 2.2 \times 10^{-16}$): El estadístico $F$ de Fisher-Snedecor con $4$ y $521$ grados de libertad supera holgadamente cualquier umbral crítico tradicional, lo que permite rechazar con absoluta contundencia la hipótesis nula:
+
+$$ H_0: \beta_1 = \beta_2 = \beta_3 = \delta_0 = 0 $$
+
+y validar que el modelo econométrico en su conjunto posee una capacidad explicativa genuina.
+
+### Modelo 2: Términos de Interacción 
+
+El modelo aditivo anterior asume que las líneas de regresión para hombres y mujeres son estrictamente paralelas ($\delta_1 = 0$). Para someter a prueba esta restricción y determinar si el retorno a la educación difiere según el género, especificamos un modelo con término interactivo (`educ * female`):
+
+$$\ln(\text{wage}) = \beta_0 + \delta_0 \text{female} + \beta_1 \text{educ} + \delta_1 (\text{educ} \times \text{female}) + \beta_2 \text{exper} + \beta_3 \text{tenure} + u$$
+```{r}
+# Estimación MCO del modelo con interacción (ANCOVA)
+modelo_interactivo <- lm(lwage ~ educ + exper + tenure + female + educ:female, data = wage1)
+summary(modelo_interactivo)
+```
+
+Interpretación de los Resultados:
+
+* **Intercepto** ($\hat{\beta}_0 \approx 0.4647$): Representa el logaritmo salarial esperado para la categoría de referencia (hombres, female = 0) cuando los años de educación (educ), experiencia (exper) y antigüedad (tenure) son estrictamente cero. Este parámetro es estadísticamente significativo ($t = 3.781, p = 0.000174$).   
+
+* **Variable Educación** (`educ`, $\hat{\beta}_1 \approx 0.0903$): Mide el retorno marginal a la educación específicamente para el grupo de referencia (hombres). Manteniendo constantes la experiencia, la antigüedad y el género, cada año adicional de escolaridad formal incrementa el salario por hora de los hombres en un $9.03\%$ en promedio. Su estadístico $t$ de $10.359$ ($p < 2 \times 10^{-16}$) refleja un impacto altamente robusto.   
+
+* **Variable Experiencia** (`exper`, $\hat{\beta}_2 \approx 0.0046$): Controlando por las demás variables del modelo, cada año adicional de experiencia general en el mercado laboral se asocia a un incremento salarial aproximado del $0.46\%$ ($t = 2.850, p = 0.00451$).   
+
+* **Variable Antigüedad** (`tenure`, $\hat{\beta}_3 \approx 0.0174$): Controlando por educación, experiencia y género, cada año de permanencia ininterrumpida en la empresa actual genera un premio salarial directo del $1.74\%$ ($t = 5.849, p = 8.76 \times 10^{-9}$).   
+
+* **Dummy de Género** (`female`, $\hat{\delta}_0 \approx -0.2104$): Mide el diferencial de intercepto (cambio de nivel base) para las mujeres cuando la educación toma un valor de cero. Sin embargo, en esta especificación interactiva, su valor no es estadísticamente significativo ($t = -1.209, p = 0.2271$).
+
+* **Término de Interacción** (`educ:female`, $\hat{\delta}_1 \approx -0.0072$): Es el coeficiente diferencial de la pendiente. Mide cuánto varía el retorno marginal a la educación en las mujeres en comparación directa con los hombres. El coeficiente indica que el retorno a la educación en las mujeres es ligeramente inferior ($9.03\% - 0.72\% = 8.31\%$), pero al evaluar su prueba $t$ observamos que no es estadísticamente significativo ($t = -0.534, p = 0.5935$). Esto confirma que no hay evidencia para rechazar la hipótesis de pendientes paralelas; es decir, el retorno a la educación no difiere significativamente entre géneros en esta muestra.   
+
+* **Bondad de Ajuste Global** ($R^2 = 0.3926$): El coeficiente de determinación múltiple indica que el modelo interactivo logra explicar el $39.26\%$ de la variabilidad total observada en el logaritmo del salario (lwage). Al compararlo con el modelo aditivo ($R^2 = 0.3923$), se aprecia que la inclusión del término de interacción apenas aporta una mejora marginal casi nula en el ajuste, respaldando la parsimonia del modelo aditivo.   
+
+* **Significancia Conjunta** ($F = 67.22, p < 2.2 \times 10^{-16}$): El estadístico $F$ de Fisher-Snedecor con $5$ y $520$ grados de libertad supera holgadamente los umbrales críticos, permitiendo rechazar la hipótesis nula global y validando que el conjunto de regresores del modelo interactivo posee una capacidad explicativa genuina sobre el salario.  
+
+
+Para visualizar de manera clara cómo se comportan estas estimaciones empíricas, generamos un gráfico con `ggplot2` utilizando las líneas de tendencia ajustadas por género sobre el dataset `wage1`
+
+```{r, fig.width=8.5, fig.height=4.8, message=FALSE, warning=FALSE}
+library(ggplot2)
+
+# Gráfico de dispersión y líneas de regresión ajustadas por género
+ggplot(wage1, aes(x = educ, y = lwage, color = factor(female, labels = c("Hombres (D = 0)", "Mujeres (D = 1)")))) +
+  geom_point(alpha = 0.3, size = 1.5) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 1.2) +
+  scale_color_manual(values = c("Hombres (D = 0)" = "#1d4ed8", "Mujeres (D = 1)" = "#b91c1c")) +
+  theme_minimal(base_size = 11) +
+  labs(
+    title = "Análisis ANCOVA Empírico: Retorno Salarial y Género (wage1)",
+    subtitle = "Comparación de pendientes y desplazamiento de intercepto entre hombres y mujeres",
+    x = "Años de Educación Formal (educ)",
+    y = "Logaritmo del Salario por Hora (lwage)",
+    color = "Segmento:",
+    caption = "Fuente: Elaboración propia en R basada en el dataset wage1 de Wooldridge (2015)."
+  ) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13, color = "#0f172a"),
+    plot.subtitle = element_text(size = 10.5, color = "#334155", margin = margin(b = 10)),
+    plot.caption = element_text(size = 8.5, color = "#64748b", hjust = 0, margin = margin(t = 10)),
+    axis.title = element_text(face = "bold", color = "#1e293b"),
+    legend.position = "bottom",
+    panel.grid.minor = element_blank()
+  )
+```  
+---
+
+## Conclusiones
+
+El estudio de las variables categóricas, dummies e interactivas amplía de manera radical la potencia analítica del Modelo de Regresión Lineal Múltiple (RLM):
+
+1. **Flexibilidad Cualitativa:** Las variables dummy permiten cuantificar atributos no numéricos (género, estado civil, ubicación, régimen contractual) transformándolos en desplazamientos del intercepto ($\delta_0$), preservando los supuestos de linealidad en los parámetros exigidos por MCO.
+
+2. **El Principio de No Colinealidad:** Ante variables categóricas con $m$ opciones, la inclusión estricta de $m-1$ variables evita la trampa de la colinealidad perfecta, estableciendo de manera inequívoca el grupo de referencia o línea base.
+
+3. **Modelación de Heterogeneidad mediante Interacciones:** Los términos interactivos (continuo-dummy) trascienden el supuesto de efectos marginales constantes, permitiendo evaluar si el impacto de una palanca de gestión (como la educación o la experiencia) está moderado por características estructurales de los individuos.
+
+4. **Rigurosidad Inferencial:** Mediante las pruebas $t$ individuales y las pruebas $F$ conjuntas, la econometría proporciona el estándar probatorio necesario para determinar si las brechas detectadas (por ejemplo, de género) obedecen a patrones estructurales genuinos o al azar muestral, orientando con precisión la toma de decisiones gerenciales en materia de compensaciones y políticas de recursos humanos.
+
+---
+
+## Referencias Bibliográficas
+
+* Fox, J., y Weisberg, S. (2019). *An R Companion to Applied Regression* (3.ª ed.). Sage. https://socialsciences.mcmaster.ca/jfox/Books/Companion/
+* Gujarati, D. N., y Porter, D. C. (2010). *Econometría* (5.ª ed.). McGraw-Hill.
+* Robinson, D., Hayes, A., y Couch, S. (2024). *broom: Convert statistical objects into tidy tibbles* [Paquete de R]. CRAN. https://CRAN.R-project.org/package=broom
+* Shea, J. M. (2024). *wooldridge: 115 Data Sets from "Introductory Econometrics: A Modern Approach" by Jeffrey M. Wooldridge* [Paquete de R]. CRAN. https://CRAN.R-project.org/package=wooldridge
+* Wickham, H. (2016). *ggplot2: Elegant graphics for data analysis* (2.ª ed.). Springer-Verlag. https://ggplot2.tidyverse.org
+* Wooldridge, J. M. (2015). *Introducción a la econometría: Un enfoque moderno* (5.ª ed.). Cengage Learning.
