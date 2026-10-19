@@ -36,5 +36,9 @@ Selecciona el formato que deseas consultar para cada unidad:
 
 ---
 
+### 5. Variables Dummies y término de interacción
+* 📥 [Descargar script .Rmd](05_Dummies_Interactivas.Rmd) *(Código fuente reproducible)*
+
+
 ### 📂 Recursos adicionales
 - 🔗 **[Repositorio completo en GitHub](https://github.com/jpcl-cl/Econometria)**
