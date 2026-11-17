@@ -1,0 +1,214 @@
+---
+title: 'Apunte 6: Funciones No Lineales y Transformaciones Logarítmicas'
+subtitle: "Econometría para la gestión · Ingeniería Comercial"
+author: "Prof. Juan Pablo Carrasco"
+date: "`r format(Sys.time(), '%d de %B de %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: tango
+    code_folding: show
+    df_print: paged
+    self_contained: true
+---
+
+# **Introducción**
+
+En el análisis de decisiones gerenciales y económicas, la naturaleza de las relaciones causales rara vez responde a una simple línea recta. Si bien el modelo de regresión lineal múltiple (RLM) exige linealidad estricta en los parámetros ($\beta_k$), no impone restricción alguna sobre la forma funcional de las variables explicativas o dependientes.
+
+En la práctica económica, los fenómenos presentan con frecuencia comportamientos de rendimientos marginales crecientes o decrecientes, tasas de crecimiento exponencial o elasticidades constantes.La incorporación de funciones no lineales, como por ejemplo, términos cuadráticos y transformaciones logarítmicas, permite modelar con precisión estos comportamientos complejos sin sacrificar la estimación por Mínimos Cuadrados Ordinarios (MCO).
+
+El objetivo de este apunte es revisar la teoría, la interpretación analítica y la estimación empírica de los modelos cuadráticos y logarítmicos basándose en los fundamentos de Gujarati y Porter (2010) y Wooldridge (2015), utilizando bases de datos clásicas en R.
+
+# Funciones Cuadráticas y Efectos Marginales Variables
+
+La inclusión de un término cuadrático ($X^2$) en un modelo econométrico es una de las estrategias más utilizadas para relajar el supuesto de efectos marginales constantes. En la teoría económica, la Ley de Rendimientos Marginales Decrecientes postula que, a partir de cierto umbral, añadir unidades sucesivas de un factor productivo o de gestión genera incrementos cada vez menores en la variable de desempeño.
+
+Consideremos un modelo de regresión no lineal en las variables pero estrictamente lineal en sus parámetros:
+
+$$Y_i = \beta_0 + \beta_1 X_i + \beta_2 X_i^2 + u_i$$
+
+Donde:
+
+$\beta_0$: Representa el intercepto global del modelo.
+
+$\beta_1$: Coeficiente asociado al efecto lineal de $X$ sobre $Y$.
+
+$\beta_2$: Coeficiente que captura la curvatura (no linealidad).
+
+  * Si $\beta_2 < 0$, la función de regresión es estrictamente cóncava (forma de "U" invertida), lo que denota rendimientos marginales decrecientes hasta alcanzar un punto máximo.
+  * Si $\beta_2 > 0$, la función es estrictamente convexa (forma de "U"), lo que denota rendimientos marginales crecientes a partir de un valor mínimo.
+  
+## El Efecto Marginal y el Análisis de Derivadas Parciales
+
+En un modelo lineal simple ($Y = \beta_0 + \beta_1 X$), el impacto de una variación en la regresora es constante e idéntico a $\beta_1$ para cualquier individuo de la muestra, independientemente de su nivel base.
+
+En contraste, al incorporar el término cuadrático, el efecto marginal (EM) deja de ser un número fijo y se transforma en una función dependiente del nivel específico de $X$. Esto se obtiene calculando la derivada parcial (o total) de la esperanza condicional de $Y$ respecto a $X$:
+
+$$\text{EM} = \frac{dY}{dX} = \beta_1 + 2\beta_2 X_i$$
+
+La presencia de $X_i$ en la expresión del efecto marginal implica que el impacto de la variable explicativa varía a lo largo del dominio de la distribución:
+
+**1** .Para valores bajos de $X$, el efecto neto está dominado por el término lineal $\beta_1$ (asumiendo $\beta_1 > 0$).
+
+**2** .A medida que $X$ aumenta, el segundo término ($2\beta_2 X_i$) resta magnitud de forma progresiva (si $\beta_2 < 0$), reflejando el agotamiento paulatino del estímulo económico.
+
+## Deducción Analítica del Punto de Inflexión (Vértice Óptimo)
+
+Para la toma de decisiones estratégicas, resulta fundamental determinar el nivel crítico $X^*$ donde el rendimiento marginal del factor alcanza su punto de saturación (máximo rendimiento) o su punto de inflexión.
+
+Matemáticamente, este punto crítico se encuentra igualando el efecto marginal a cero ($\frac{dY}{dX} = 0$), maximizando o minimizando la función cuadrática:
+
+$$\beta_1 + 2\beta_2 X^* = 0$$
+
+Despejando analíticamente el valor óptimo de $X^*$:
+
+$$X^* = -\frac{\beta_1}{2\beta_2}$$
+
+* **Condición de Máximo** ($\beta_2 < 0$): Si el término cuadrático es negativo, la segunda derivada es $\frac{d^2Y}{dX^2} = 2\beta_2 < 0$, lo que confirma que el vértice $X^*$ corresponde a un punto de máximo rendimiento.
+
+* **Interpretación:** Si evaluamos la experiencia laboral sobre los salarios o la productividad de una planta en función de la inversión en capital físico, el vértice $X^*$ determina exactamente el umbral crítico donde las ganancias marginales se anulan. Operar más allá de $X^*$ implica rendimientos decrecientes netos que pueden deteriorar la eficiencia organizacional.
+
+
+```{r}
+library(ggplot2)
+
+# ==============================================================================
+# 1. PARÁMETROS DEL ESCENARIO CUADRÁTICO
+# ==============================================================================
+b0 <- 10.0
+b1 <- 0.8
+b2 <- -0.008
+
+# ==============================================================================
+# 2. CREACIÓN DE GRILLA Y CÁLCULO DE Y PREDICHO
+# ==============================================================================
+x_seq <- seq(0, 100, length.out = 200)
+y_seq <- b0 + b1 * x_seq + b2 * (x_seq^2)
+df_cuad <- data.frame(X = x_seq, Y = y_seq)
+
+# Cálculo analítico del vértice
+x_star <- -b1 / (2 * b2)
+y_star <- b0 + b1 * x_star + b2 * (x_star^2)
+
+# ==============================================================================
+# 3. VISUALIZACIÓN GRÁFICA
+# ==============================================================================
+ggplot(df_cuad, aes(x = X, y = Y)) +
+  geom_line(color = "#1d4ed8", linewidth = 1.3) +
+  geom_vline(xintercept = x_star, linetype = "dashed", color = "#b91c1c", linewidth = 1) +
+  geom_point(aes(x = x_star, y = y_star), color = "#b91c1c", size = 4) +
+  annotate("label", x = x_star + 8, y = y_star - 1.5,
+           label = paste0("Punto Óptimo (Vértice)\nX* = ", x_star, " unidades"),
+           color = "#b91c1c", fill = "#fef2f2", fontface = "bold", size = 3.5) +
+  labs(
+    title = "Relación Cóncava y Rendimientos Marginales Decrecientes",
+    subtitle = "Modelo cuadrático con β1 > 0 y β2 < 0 (Punto de saturación)",
+    x = "Variable Explicativa (X)",
+    y = "Variable Dependiente Predicha E[Y | X]",
+    caption = "Fuente: Elaboración propia basada en los fundamentos de Gujarati y Porter (2010)."
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold", size = 13, color = "#0f172a"),
+    plot.subtitle = element_text(size = 10.5, color = "#334155", margin = margin(b = 10)),
+    plot.caption = element_text(size = 8.5, color = "#64748b", hjust = 0, margin = margin(t = 10)),
+    axis.title = element_text(face = "bold", color = "#1e293b"),
+    panel.grid.minor = element_blank()
+  )
+```
+
+# **Modelos Logarítmicos:** Teoría y Aplicación Económica
+
+En la modelización econométrica, el supuesto de linealidad estricta entre las variables originales suele entrar en contradicción con la naturaleza de los fenómenos socioeconómicos y empresariales. Variables clave como los *salarios*, el *PIB per cápita*, el *consumo de los hogares* o la *inversión en activos fijos* no crecen de manera aditiva constante, sino que responden a dinámicas multiplicativas, de interés compuesto o de rendimientos marginales decrecientes (Gujarati y Porter, 2010; Wooldridge, 2015).
+
+Las **transformaciones logarítmicas** constituyen una de las herramientas analíticas más potentes de la econometría moderna. Al aplicar el operador logaritmo natural ($\ln$) a las series de datos, se logra una triple ventaja metodológica y empírica:
+
+  **1**. **Linealidad en los Parámetros**: Permiten estimar relaciones no lineales entre las variables originales mediante el método de Mínimos Cuadrados Ordinarios (MCO), preservando la linealidad esencial en los parámetros $\beta_k$ exigida por el teorema de Gauss-Markov.
+
+  **2**. **Interpretación Económica Directa (Elasticidades y Semielasticidades)**: Transforman coeficientes absolutos en tasas de variación porcentual, elasticidades constantes o tasas de crecimiento compuesto, facilitando la lectura gerencial y la formulación de políticas públicas.
+
+  **3**. **Estabilización de la Varianza y Normalidad**: Atenúan la asimetría de las distribuciones de cola larga (típicas de variables monetarias) y reducen los problemas de heterocedasticidad al comprimir la escala de los datos de alta magnitud.
+
+## **Formas Funcionales** 
+
+### **A. Modelo Lineal-Lineal ($Y$ en niveles, $X$ en niveles)**
+
+**Ecuación Teórica:** $Y_i = \beta_0 + \beta_1 X_i + u_i$
+
+**Interpretación de $\beta_1$:** Un cambio absoluto de una unidad en $X$ genera un cambio absoluto de $\beta_1$ unidades en $Y$.  
+
+Ejemplo (Salarios en función de la educación en niveles):
+
+```{r}
+library(wooldridge)
+data("wage1")
+
+# Estimación lineal-lineal
+mod_linlin <- lm(wage ~ educ, data = wage1)
+summary(mod_linlin)
+```
+
+> **Interpretación:** El coeficiente $\hat{\beta}_1$ de `educ` indica que por cada año adicional de educación formal, el salario por hora aumenta en 0,54 dólares por hora.
+
+### **B. Modelo Log-Lineal / Log-Lin ($Y$ en logaritmos, $X$ en niveles)**
+
+**Ecuación Teórica:** $\ln(Y_i) = \beta_0 + \beta_1 X_i + u_i$
+
+**Interpretación de $\beta_1$:** Un incremento de una unidad en $X$ genera un cambio porcentual aproximado del $(100 \times \beta_1)\%$ en $Y$. Cuando el coeficiente es de mayor magnitud, el cambio porcentual exacto se calcula mediante la transformación de Halvorsen-Palmquist: $100 \times (e^{\beta_1} - 1)$.   
+
+Ejemplo (Ecuación de Mincer ampliada):
+```{r}
+# Estimación log-lin (Semilogarítmica)
+mod_loglin <- lm(lwage ~ educ + exper + tenure, data = wage1)
+summary(mod_loglin)
+```
+
+> **Interpretación:** El coeficiente asociado a `educ` mide el retorno porcentual instantáneo o semielasticidad. Si $\hat{\beta}_1 = 0,092$, cada año adicional de educación incrementa el salario por hora en aproximadamente un $9,2\%$, ceteris paribus.
+
+### **C. Lineal-Log / Lin-Log ($Y$ en niveles, $X$ en logaritmos)**
+
+**Ecuación Teórica:** $Y_i = \beta_0 + \beta_1 \ln(X_i) + u_i$
+
+**Interpretación de $\beta_1$:** Un incremento porcentual del $1\%$ en $X$ ($\Delta X / X = 0.01$) genera un cambio absoluto de $(\beta_1 / 100)$ unidades en $Y$.   
+
+Ejemplo (Salario absoluto en función del logaritmo de la antigüedad):
+```{r}
+wage1$ltensure <- log(wage1$tenure + 1)
+mod_linlog <- lm(wage ~ ltensure, data = wage1)
+summary(mod_linlog)
+```
+> **Interpretación:** Si el coeficiente de ltensure es $\hat{\beta}_1 = 1,291$, un aumento del $1\%$ en la antigüedad del trabajador incrementa su salario absoluto en $1,291 / 100 = \$0.0129$ dólares por hora.
+
+### **D. Modelo Log-Log o Elasticidad Constante ($Y$ en logaritmos, $X$ en logaritmos)**
+
+**Ecuación Teórica:** $\ln(Y_i) = \beta_0 + \beta_1 \ln(X_i) + u_i$
+
+**Interpretación de $\beta_1$:** Representa directamente la elasticidad de $Y$ con respecto a $X$. Un incremento del $1\%$ en $X$ genera un cambio porcentual exactamente igual a $\beta_1\%$ en $Y$. 
+
+Ejemplo (Log-log aplicado a variables continuas):
+
+```{r}
+# Modelo log-log (ejemplo teórico con wage y horas de trabajo si estuviesen disponibles, o construyendo logaritmos)
+mod_loglog <- lm(log(wage) ~ log(exper + 1), data = wage1)
+summary(mod_loglog)
+```
+> **Interpretación:** El coeficiente $\hat{\beta}_1$ es directamente una elasticidad: mide la sensibilidad porcentual de la variable dependiente ante variaciones porcentuales en la variable independiente, manteniéndose constante a lo largo de toda la función de demanda u oferta estimada. En este caso, Un incremento del 1% en X genera un cambio porcentual exactamente igual a $\beta_1\%$ en Y.
+
+# **Resumen Analítico de Formas Funcionales**
+
+| **Modelo** | **Ecuación de Regresión** | **Pendiente** $\left(\dfrac{dY}{dX}\right)$ | **Elasticidad** $\left(\dfrac{dY}{dX} \cdot \frac{X}{Y}\right)$ |
+| --- | --- | --- | --- |
+|**Lineal** | $Y = \beta_0 + \beta_1 X$ | $\beta_1$ | $\beta_1 \left(\dfrac{X}{Y}\right)$ |
+|**Log-Lineal (Log-Log)** | $\ln(Y) = \beta_0 + \beta_1 \ln(X)$ | $\beta_1\left(\dfrac{Y}{X}\right)$ | $\beta_1$ |
+|**Log-Lin** | $\ln(Y) = \beta_0 + \beta_1 X$ | $\beta_1 Y$ | $\beta_1 X$ |
+|**Lin-Log** | $Y = \beta_0 + \beta_1 \ln(X)$ | $\beta_1 \left(\dfrac{1}{X}\right)$ | $\beta_1 \left(\dfrac{1}{Y}\right)$ |
+
+
+# Referencias Bibliográficas
+
+* Gujarati, D. N., y Porter, D. C. (2010). Econometría (5.ª ed.). McGraw-Hill.
+
+* Wooldridge, J. M. (2015). Introducción a la econometría: Un enfoque moderno (5.ª ed.). Cengage Learning.
