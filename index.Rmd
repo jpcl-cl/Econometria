@@ -39,6 +39,12 @@ Selecciona el formato que deseas consultar para cada unidad:
 ### 5. Variables Dummies y término de interacción
 * 📥 [Descargar script .Rmd](05_Dummies_Interactivas.Rmd) *(Código fuente reproducible)*
 
+---
+
+### 6. Extensiones del Modelo de Regresión: Modelos No Lineales
+* 🌐 [Ver Apunte en HTML](06_Funciones_NoLineales.html) *(Lectura interactiva en navegador)*
+* 📥 [Descargar script .Rmd](06_Funciones_NoLineales.Rmd) *(Código fuente reproducible)*
+
 
 ### 📂 Recursos adicionales
 - 🔗 **[Repositorio completo en GitHub](https://github.com/jpcl-cl/Econometria)**
